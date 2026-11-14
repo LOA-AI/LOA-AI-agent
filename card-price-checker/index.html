@@ -29,7 +29,10 @@
           <label for="search-input" class="sr-only">Nom de la carte</label>
           <input id="search-input" type="search" autocomplete="off" required />
           <button type="submit" class="btn-primary">Vérifier le prix</button>
+          <button type="button" id="scan-btn" class="btn-secondary" title="Prendre la carte en photo pour la rechercher">📷 Photo</button>
+          <input id="scan-input" type="file" accept="image/*" capture="environment" hidden />
         </form>
+        <div id="scan-candidates" class="market-links"></div>
         <div class="search-meta">
           <span id="source" class="muted small"></span>
           <label id="sort-label" class="small">

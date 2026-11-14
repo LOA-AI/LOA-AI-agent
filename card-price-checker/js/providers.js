@@ -94,8 +94,18 @@ async function searchPokemon(term) {
 // ---------- Magic : api.scryfall.com ----------
 
 async function searchMtg(term) {
-  const params = new URLSearchParams({ q: term, unique: "prints", order: "usd", dir: "desc" });
-  const json = await getJson(`https://api.scryfall.com/cards/search?${params}`);
+  const fetchPrints = (q) => {
+    const params = new URLSearchParams({ q, unique: "prints", order: "usd", dir: "desc" });
+    return getJson(`https://api.scryfall.com/cards/search?${params}`);
+  };
+  let json;
+  try {
+    json = await fetchPrints(term);
+  } catch (e) {
+    if (!(e instanceof NotFound)) throw e;
+    // Rien en anglais : on retente dans toutes les langues (nom français, etc.).
+    json = await fetchPrints(`${term} lang:any`);
+  }
   return (json.data || []).slice(0, PAGE_SIZE).map((c) => {
     const p = c.prices || {};
     const prices = [];

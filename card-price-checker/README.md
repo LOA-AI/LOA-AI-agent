@@ -24,6 +24,7 @@ directement la recherche correspondante sur chaque place de marché.
 ## Fonctionnalités
 
 - Recherche par nom de carte, avec image, édition, numéro et rareté
+- **Recherche par photo** (📷) : prenez la carte en photo, le nom est lu automatiquement et la recherche se lance. La lecture se fait dans le navigateur (Tesseract.js), la photo n'est envoyée nulle part
 - Plusieurs prix par carte : normale, holo, foil, 1ère édition, tendance Cardmarket, moyenne sur 30 jours…
 - Tri par pertinence, prix décroissant ou croissant, ou nom
 - **Ma liste** : suivez des cartes (☆) et gardez le prix relevé au moment de l'ajout (stockée dans le navigateur)

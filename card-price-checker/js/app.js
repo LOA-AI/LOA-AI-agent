@@ -1,5 +1,6 @@
 import { GAMES, getGame, marketLinks } from "./games.js";
 import { searchCards, sortValue } from "./providers.js";
+import { scanCard } from "./scan.js";
 
 const $ = (sel) => document.querySelector(sel);
 const WATCHLIST_KEY = "cpc.watchlist.v1";
@@ -183,6 +184,7 @@ function selectGame(id) {
     $("#results").replaceChildren();
     $("#status").textContent = "";
     $("#market-links").replaceChildren();
+    $("#scan-candidates").replaceChildren();
   }
   document.documentElement.style.setProperty("--game-accent", game.color);
   $("#search-input").placeholder = game.placeholder;
@@ -325,6 +327,54 @@ function renderResults() {
   $("#results").replaceChildren(...sortedResults().map(renderCard));
 }
 
+// ---------- recherche par photo ----------
+
+function renderScanCandidates(candidates, current) {
+  $("#scan-candidates").replaceChildren(
+    el("span", { class: "muted small" }, "Lu sur la photo : "),
+    ...candidates.map((text) =>
+      el(
+        "button",
+        {
+          type: "button",
+          class: "chip" + (text === current ? " current" : ""),
+          onclick: () => {
+            $("#search-input").value = text;
+            renderScanCandidates(candidates, text);
+            runSearch();
+          },
+        },
+        text
+      )
+    )
+  );
+}
+
+async function handleScan(file) {
+  if (!file) return;
+  const btn = $("#scan-btn");
+  btn.disabled = true;
+  $("#scan-candidates").replaceChildren();
+  $("#status").textContent = "Lecture de la photo…";
+  try {
+    const candidates = await scanCard(file, state.game.id, (progress) => {
+      $("#status").textContent = `Lecture de la photo… ${Math.round(progress * 100)} %`;
+    });
+    if (!candidates.length) {
+      $("#status").textContent =
+        "Nom illisible sur la photo. Reprenez-la bien à plat, de près, avec un bon éclairage et sans reflet.";
+      return;
+    }
+    $("#search-input").value = candidates[0];
+    renderScanCandidates(candidates, candidates[0]);
+    await runSearch();
+  } catch (err) {
+    $("#status").textContent = `⚠️ ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ---------- initialisation ----------
 
 function init() {
@@ -336,6 +386,12 @@ function init() {
   $("#search-form").addEventListener("submit", (e) => {
     e.preventDefault();
     runSearch();
+  });
+  $("#scan-btn").addEventListener("click", () => $("#scan-input").click());
+  $("#scan-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = ""; // permet de rescanner la même photo
+    handleScan(file);
   });
   $("#sort").addEventListener("change", (e) => {
     state.sort = e.target.value;
