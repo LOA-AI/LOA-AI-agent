@@ -175,6 +175,7 @@ h2 { font-size: 1.1rem; margin: 24px 0 12px; }
 .btn-secondary:disabled { opacity: 0.6; cursor: progress; }
 button.chip { font-family: inherit; cursor: pointer; }
 button.chip.current { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.paste-hint { margin: 6px 0 0; }
 .search-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .search-meta select { font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 .market-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
@@ -279,6 +280,7 @@ button.chip.current { border-color: var(--primary); color: var(--primary); font-
           <button type="button" id="scan-btn" class="btn-secondary" title="Prendre la carte en photo pour la rechercher">📷 Photo</button>
           <input id="scan-input" type="file" accept="image/*" capture="environment" hidden />
         </form>
+        <p class="muted small paste-hint">Astuce : vous pouvez aussi coller une photo de carte dans la recherche.</p>
         <div id="scan-candidates" class="market-links"></div>
         <div class="search-meta">
           <span id="source" class="muted small"></span>
@@ -1230,6 +1232,13 @@ function init() {
     const file = e.target.files[0];
     e.target.value = ""; // permet de rescanner la même photo
     handleScan(file);
+  });
+  // Coller une photo (Ctrl+V, ou « Coller » dans la recherche sur téléphone) lance aussi la lecture.
+  document.addEventListener("paste", (e) => {
+    const image = Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith("image/"));
+    if (!image) return; // texte collé : comportement normal
+    e.preventDefault();
+    if (!$("#scan-btn").disabled) handleScan(image);
   });
   $("#sort").addEventListener("change", (e) => {
     state.sort = e.target.value;

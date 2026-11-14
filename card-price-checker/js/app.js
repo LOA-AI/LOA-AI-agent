@@ -393,6 +393,13 @@ function init() {
     e.target.value = ""; // permet de rescanner la même photo
     handleScan(file);
   });
+  // Coller une photo (Ctrl+V, ou « Coller » dans la recherche sur téléphone) lance aussi la lecture.
+  document.addEventListener("paste", (e) => {
+    const image = Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith("image/"));
+    if (!image) return; // texte collé : comportement normal
+    e.preventDefault();
+    if (!$("#scan-btn").disabled) handleScan(image);
+  });
   $("#sort").addEventListener("change", (e) => {
     state.sort = e.target.value;
     renderResults();

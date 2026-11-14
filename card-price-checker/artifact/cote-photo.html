@@ -56,6 +56,9 @@
   .btn-alt { background: transparent; color: var(--ink); border-color: var(--line); min-height: 48px; font-size: 0.95rem; }
   .btn:focus-within, .btn:focus-visible, a:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
   .btn[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
+  .paste { min-height: 48px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--line); background: var(--surface); color: var(--ink); font: 500 1rem var(--font-body); text-align: center; width: 100%; }
+  .paste::placeholder { color: var(--muted); }
+  .paste:focus { outline: 3px solid var(--tag); outline-offset: 2px; }
   .btn svg { width: 26px; height: 26px; flex-shrink: 0; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
@@ -116,6 +119,8 @@
       Choisir une ou plusieurs photos
       <input class="visually-hidden" id="pick-input" type="file" accept="image/*" multiple>
     </label>
+    <label class="visually-hidden" for="paste-input">Coller une photo</label>
+    <input class="paste" id="paste-input" type="text" inputmode="none" autocomplete="off" placeholder="Ou collez une photo ici">
     <p class="small muted">Plusieurs cartes sur la même photo, c'est possible : posez-les à plat, côte à côte, sans qu'elles se chevauchent.</p>
   </div>
 
@@ -344,6 +349,7 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
   function setBusy(busy) {
     for (const id of ["shoot-label", "pick-label"]) $(id).setAttribute("aria-disabled", String(busy));
     for (const id of ["shoot-input", "pick-input"]) $(id).disabled = busy;
+    $("paste-input").disabled = busy;
   }
 
   // ---- historique (ce navigateur uniquement) ----
@@ -439,6 +445,18 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
       analyse(files);
     });
   }
+  // Coller une ou plusieurs photos, dans la zone prévue ou n'importe où sur la page.
+  document.addEventListener("paste", (e) => {
+    const images = Array.from((e.clipboardData && e.clipboardData.files) || []).filter((f) => f.type.startsWith("image/"));
+    e.preventDefault();
+    if (!images.length) {
+      setStatus("Le presse-papiers ne contient pas de photo. Copiez une image de carte, puis collez-la ici.", { error: true });
+      return;
+    }
+    if (!$("shoot-input").disabled) analyse(images);
+  });
+  $("paste-input").addEventListener("input", (e) => { e.target.value = ""; });
+
   $("history-clear").addEventListener("click", () => {
     saveHistory([]);
     renderHistory();
