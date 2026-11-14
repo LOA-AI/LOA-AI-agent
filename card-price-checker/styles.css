@@ -40,7 +40,7 @@ body {
   line-height: 1.45;
 }
 
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
 .muted { color: var(--muted); }
 .small { font-size: 0.875rem; }
 .tiny { font-size: 0.75rem; }
@@ -53,6 +53,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+  padding-top: env(safe-area-inset-top);
   transition: border-color 0.2s;
 }
 .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
@@ -225,11 +226,13 @@ button.chip.current { border-color: var(--primary); color: var(--primary); font-
 .big-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-link { padding: 10px 14px; border-radius: var(--radius); background: var(--primary); color: var(--primary-text); text-decoration: none; font-weight: 600; }
 
-.footer { padding: 16px; border-top: 1px solid var(--border); margin-top: 16px; }
+.footer { padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); margin-top: 16px; }
 
 @media (max-width: 560px) {
   .topbar h1 { font-size: 1.05rem; }
   .search-form { flex-direction: column; }
-  .games { grid-template-columns: repeat(2, 1fr); }
+  /* Sur téléphone : les jeux défilent horizontalement pour garder la recherche à l'écran. */
+  .games { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+  .game-tile { flex: 0 0 140px; scroll-snap-align: start; }
   .results { grid-template-columns: 1fr; }
 }
