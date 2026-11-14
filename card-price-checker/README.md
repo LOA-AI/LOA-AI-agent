@@ -32,7 +32,15 @@ directement la recherche correspondante sur chaque place de marché.
 - Lien partageable : la recherche est enregistrée dans l'URL (`#jeu=mtg&q=black lotus`)
 - Mode sombre automatique, adapté au mobile
 
-## Lancer l'application
+## Installer chez soi (le plus simple)
+
+Téléchargez le fichier [`dist/cote-des-cartes.html`](dist/cote-des-cartes.html) et ouvrez-le par double-clic :
+toute l'application tient dans ce seul fichier, sans installation ni serveur. Une connexion internet reste
+nécessaire pour récupérer les prix.
+
+Après une modification du code, régénérez ce fichier avec `python3 build_single_file.py`.
+
+## Lancer l'application depuis les sources
 
 Aucune installation ni compilation : ce sont des fichiers statiques (HTML, CSS, JavaScript).
 

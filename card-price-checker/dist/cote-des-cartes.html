@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cote des Cartes</title>
+    <meta name="description" content="Vérifiez le prix des cartes Pokémon, Magic, Yu-Gi-Oh! et des 10 jeux de cartes les plus collectionnés." />
+    <style>
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef0f6;
+  --text: #1b1f2a;
+  --muted: #5d6475;
+  --border: #dde1ea;
+  --primary: #3b5bdb;
+  --primary-text: #ffffff;
+  --success: #1f7a4d;
+  --danger: #c92a2a;
+  --game-accent: #f5c400;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 4px 12px rgba(16, 24, 40, 0.05);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12141b;
+    --surface: #1b1e28;
+    --surface-2: #252937;
+    --text: #e8eaf0;
+    --muted: #9aa1b2;
+    --border: #2f3445;
+    --primary: #6a85ff;
+    --success: #4cc38a;
+    --danger: #ff6b6b;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+.tiny { font-size: 0.75rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---- barre du haut ---- */
+.topbar {
+  background: var(--surface);
+  border-bottom: 3px solid var(--game-accent);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  transition: border-color 0.2s;
+}
+.topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+.topbar h1 { font-size: 1.3rem; margin: 0; }
+
+.watch-panel { position: relative; }
+.watch-panel summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.watch-panel summary::-webkit-details-marker { display: none; }
+.watchlist {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(380px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+.watch-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.watch-item:last-child { border-bottom: 0; }
+.watch-item img, .watch-item .thumb-placeholder { width: 44px; height: 61px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.watch-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.watch-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watch-actions { display: flex; gap: 4px; }
+
+/* ---- tuiles des jeux ---- */
+h2 { font-size: 1.1rem; margin: 24px 0 12px; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.game-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.game-tile:hover { border-color: var(--accent); transform: translateY(-1px); }
+.game-tile.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.game-tile .rank { position: absolute; top: 8px; right: 10px; font-size: 0.75rem; color: var(--muted); font-weight: 700; }
+.game-tile .emoji { font-size: 1.5rem; }
+.game-tile .game-name { font-weight: 600; font-size: 0.95rem; }
+.badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.badge.live { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.badge.links { background: var(--surface-2); color: var(--muted); }
+
+/* ---- recherche ---- */
+.search-section { margin-top: 20px; }
+.search-form { display: flex; gap: 8px; }
+.search-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+.search-form input:focus { outline: none; border-color: var(--game-accent); }
+.btn-primary {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-secondary {
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--game-accent); }
+.btn-secondary:disabled { opacity: 0.6; cursor: progress; }
+button.chip { font-family: inherit; cursor: pointer; }
+button.chip.current { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.search-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.search-meta select { font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.market-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.status { min-height: 1.4em; margin: 10px 0; font-weight: 500; }
+
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+
+.btn-small {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.btn-small.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* ---- résultats ---- */
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding-bottom: 32px; }
+.card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+.card-img { flex-shrink: 0; }
+.card-img img, .card-img .thumb-placeholder { width: 84px; height: 117px; object-fit: contain; border-radius: 6px; display: block; }
+.thumb-placeholder { background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
+.card-body { flex: 1; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; gap: 6px; align-items: flex-start; }
+.card-head h3 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
+.card-body > p { margin: 4px 0; }
+.star { background: none; border: 0; font-size: 1.3rem; line-height: 1; cursor: pointer; color: var(--muted); padding: 0 2px; }
+.star.on { color: #f5b301; }
+.main-price { font-size: 1.35rem; font-weight: 700; color: var(--success); }
+.main-price .small { font-weight: 400; display: block; font-size: 0.75rem; }
+.price-list { list-style: none; padding: 0; margin: 6px 0; font-size: 0.8rem; }
+.price-list li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dashed var(--border); }
+.price-list li span { color: var(--muted); flex: 1; min-width: 0; }
+.price-list li strong { white-space: nowrap; }
+.card-links { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+.skeleton { height: 160px; background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.notice { grid-column: 1 / -1; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--game-accent); border-radius: var(--radius); padding: 16px; }
+.notice h3 { margin-top: 0; }
+.notice.error { border-left-color: var(--danger); }
+.big-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-link { padding: 10px 14px; border-radius: var(--radius); background: var(--primary); color: var(--primary-text); text-decoration: none; font-weight: 600; }
+
+.footer { padding: 16px; border-top: 1px solid var(--border); margin-top: 16px; }
+
+@media (max-width: 560px) {
+  .topbar h1 { font-size: 1.05rem; }
+  .search-form { flex-direction: column; }
+  .games { grid-template-columns: repeat(2, 1fr); }
+  .results { grid-template-columns: 1fr; }
+}
+</style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <h1>🃏 Cote des Cartes</h1>
+        <details id="watch-panel" class="watch-panel">
+          <summary>★ Ma liste (<span id="watch-count">0</span>)</summary>
+          <div id="watchlist" class="watchlist"></div>
+        </details>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section aria-labelledby="games-title">
+        <h2 id="games-title">Top 10 des jeux de cartes les plus collectionnés</h2>
+        <div id="games" class="games"></div>
+      </section>
+
+      <section class="search-section" aria-label="Recherche">
+        <form id="search-form" class="search-form" role="search">
+          <label for="search-input" class="sr-only">Nom de la carte</label>
+          <input id="search-input" type="search" autocomplete="off" required />
+          <button type="submit" class="btn-primary">Vérifier le prix</button>
+          <button type="button" id="scan-btn" class="btn-secondary" title="Prendre la carte en photo pour la rechercher">📷 Photo</button>
+          <input id="scan-input" type="file" accept="image/*" capture="environment" hidden />
+        </form>
+        <div id="scan-candidates" class="market-links"></div>
+        <div class="search-meta">
+          <span id="source" class="muted small"></span>
+          <label id="sort-label" class="small">
+            Trier :
+            <select id="sort">
+              <option value="relevance">Pertinence</option>
+              <option value="price-desc">Prix décroissant</option>
+              <option value="price-asc">Prix croissant</option>
+              <option value="name">Nom</option>
+            </select>
+          </label>
+        </div>
+        <div id="market-links" class="market-links"></div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="results" class="results" aria-label="Résultats"></section>
+    </main>
+
+    <footer class="wrap footer muted small">
+      Prix indicatifs fournis par Pokémon TCG API, Scryfall, YGOPRODeck et Lorcast (données TCGplayer et Cardmarket).
+      Les prix USD et EUR ne sont pas convertis ; le tri utilise un taux indicatif. Vérifiez toujours sur la place de marché avant
+      d'acheter ou de vendre.
+    </footer>
+
+    <script>
+(() => {
+// Top 10 des jeux de cartes à collectionner les plus collectionnés,
+// avec la source de prix utilisée pour chacun.
+//
+// live: true  -> recherche + prix en direct via une API publique gratuite
+// live: false -> recherche via liens directs vers les places de marché
+
+const enc = encodeURIComponent;
+
+const GAMES = [
+  {
+    id: "pokemon",
+    name: "Pokémon",
+    emoji: "⚡",
+    color: "#f5c400",
+    live: true,
+    source: "Pokémon TCG API (TCGplayer + Cardmarket)",
+    placeholder: "ex. Dracaufeu / Charizard, Pikachu…",
+    tcgplayer: "pokemon",
+    cardmarket: "Pokemon",
+  },
+  {
+    id: "mtg",
+    name: "Magic: The Gathering",
+    emoji: "🧙",
+    color: "#c0562b",
+    live: true,
+    source: "Scryfall (TCGplayer + Cardmarket)",
+    placeholder: "ex. Black Lotus, Sol Ring…",
+    tcgplayer: "magic",
+    cardmarket: "Magic",
+  },
+  {
+    id: "yugioh",
+    name: "Yu-Gi-Oh!",
+    emoji: "👁️",
+    color: "#7b3fbf",
+    live: true,
+    source: "YGOPRODeck (TCGplayer, Cardmarket, eBay…)",
+    placeholder: "ex. Dark Magician, Blue-Eyes…",
+    tcgplayer: "yugioh",
+    cardmarket: "YuGiOh",
+  },
+  {
+    id: "sports",
+    name: "Cartes de sport",
+    emoji: "🏀",
+    color: "#1f7a4d",
+    live: false,
+    source: "Ventes eBay terminées, PriceCharting",
+    placeholder: "ex. Michael Jordan 1986 Fleer, Mbappé Panini…",
+    sports: true,
+  },
+  {
+    id: "lorcana",
+    name: "Disney Lorcana",
+    emoji: "✨",
+    color: "#2a6fdb",
+    live: true,
+    source: "Lorcast (prix TCGplayer)",
+    placeholder: "ex. Elsa, Stitch, Mickey…",
+    tcgplayer: "lorcana-tcg",
+    cardmarket: "Lorcana",
+  },
+  {
+    id: "onepiece",
+    name: "One Piece Card Game",
+    emoji: "🏴‍☠️",
+    color: "#d22f2f",
+    live: false,
+    source: "TCGplayer, Cardmarket, eBay",
+    placeholder: "ex. Monkey D. Luffy, Shanks…",
+    tcgplayer: "one-piece-card-game",
+    cardmarket: "OnePiece",
+  },
+  {
+    id: "dbs",
+    name: "Dragon Ball Super",
+    emoji: "🐉",
+    color: "#f08a00",
+    live: false,
+    source: "TCGplayer, Cardmarket, eBay",
+    placeholder: "ex. Son Goku, Vegeta…",
+    tcgplayer: "dragon-ball-super-fusion-world",
+    cardmarket: "DragonBallSuper",
+  },
+  {
+    id: "digimon",
+    name: "Digimon Card Game",
+    emoji: "🦖",
+    color: "#0096c7",
+    live: false,
+    source: "TCGplayer, Cardmarket, eBay",
+    placeholder: "ex. Omnimon, Agumon…",
+    tcgplayer: "digimon-card-game",
+    cardmarket: "Digimon",
+  },
+  {
+    id: "fab",
+    name: "Flesh and Blood",
+    emoji: "⚔️",
+    color: "#8c1c13",
+    live: false,
+    source: "TCGplayer, Cardmarket, eBay",
+    placeholder: "ex. Fyendal's Spring Tunic…",
+    tcgplayer: "flesh-and-blood-tcg",
+    cardmarket: "FleshAndBlood",
+  },
+  {
+    id: "swu",
+    name: "Star Wars: Unlimited",
+    emoji: "🌌",
+    color: "#3c4a5c",
+    live: false,
+    source: "TCGplayer, Cardmarket, eBay",
+    placeholder: "ex. Darth Vader, Luke Skywalker…",
+    tcgplayer: "star-wars-unlimited",
+    cardmarket: "StarWarsUnlimited",
+  },
+];
+
+function getGame(id) {
+  return GAMES.find((g) => g.id === id) || GAMES[0];
+}
+
+// Liens de recherche vers les places de marché, pour n'importe quel jeu.
+function marketLinks(game, query) {
+  const q = enc(query);
+  const links = [];
+  if (game.tcgplayer) {
+    links.push({
+      label: "TCGplayer",
+      url: `https://www.tcgplayer.com/search/${game.tcgplayer}/product?q=${q}`,
+    });
+  }
+  if (game.cardmarket) {
+    links.push({
+      label: "Cardmarket",
+      url: `https://www.cardmarket.com/fr/${game.cardmarket}/Products/Search?searchString=${q}`,
+    });
+  }
+  const ebayTerms = game.sports ? query : `${query} ${game.name}`;
+  links.push({
+    label: "eBay (ventes réalisées)",
+    url: `https://www.ebay.fr/sch/i.html?_nkw=${enc(ebayTerms)}&LH_Sold=1&LH_Complete=1`,
+  });
+  links.push({
+    label: "PriceCharting",
+    url: `https://www.pricecharting.com/search-products?q=${enc(ebayTerms)}&type=prices`,
+  });
+  return links;
+}
+
+// Fournisseurs de prix : chaque fonction renvoie une liste de cartes normalisées :
+// {
+//   id, name, subtitle, image,
+//   prices: [{ label, value, currency }],   // value: number
+//   links:  [{ label, url }],
+//   updatedAt?: string
+// }
+
+const PAGE_SIZE = 30;
+
+// Taux indicatif utilisé uniquement pour trier des prix USD/EUR ensemble.
+const USD_TO_EUR = 0.86;
+
+class NotFound extends Error {}
+
+async function getJson(url, { notFoundStatuses = [404] } = {}) {
+  let res;
+  try {
+    res = await fetch(url, { headers: { Accept: "application/json" } });
+  } catch (e) {
+    throw new Error("Impossible de joindre le service de prix (réseau ou blocage CORS).");
+  }
+  if (notFoundStatuses.includes(res.status)) throw new NotFound();
+  if (res.status === 429) throw new Error("Trop de requêtes : réessayez dans quelques secondes.");
+  if (!res.ok) throw new Error(`Le service de prix a répondu ${res.status}.`);
+  return res.json();
+}
+
+const num = (v) => {
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+function addPrice(list, label, value, currency) {
+  const n = num(value);
+  if (n !== null) list.push({ label, value: n, currency });
+}
+
+// ---------- Pokémon : api.pokemontcg.io ----------
+
+const POKEMON_VARIANTS = {
+  normal: "Normale",
+  holofoil: "Holo",
+  reverseHolofoil: "Reverse holo",
+  "1stEditionHolofoil": "1ère éd. holo",
+  "1stEditionNormal": "1ère éd.",
+  unlimitedHolofoil: "Unlimited holo",
+  unlimited: "Unlimited",
+  "1stEdition": "1ère éd.",
+};
+
+function pokemonQuery(term) {
+  const clean = term.replace(/["\\]/g, "").trim();
+  if (/^[\w'.-]+$/.test(clean)) return `name:${clean}*`;
+  return `name:"${clean}"`;
+}
+
+async function searchPokemon(term) {
+  const params = new URLSearchParams({
+    q: pokemonQuery(term),
+    pageSize: String(PAGE_SIZE),
+    orderBy: "-set.releaseDate",
+  });
+  const json = await getJson(`https://api.pokemontcg.io/v2/cards?${params}`);
+  return (json.data || []).map((c) => {
+    const prices = [];
+    const tp = c.tcgplayer?.prices || {};
+    for (const [variant, p] of Object.entries(tp)) {
+      const label = POKEMON_VARIANTS[variant] || variant;
+      addPrice(prices, `TCGplayer · ${label} (marché)`, p.market ?? p.mid, "USD");
+    }
+    const cm = c.cardmarket?.prices || {};
+    addPrice(prices, "Cardmarket · tendance", cm.trendPrice, "EUR");
+    addPrice(prices, "Cardmarket · moyenne 30 j", cm.avg30, "EUR");
+    addPrice(prices, "Cardmarket · reverse holo", cm.reverseHoloTrend, "EUR");
+
+    const links = [];
+    if (c.tcgplayer?.url) links.push({ label: "TCGplayer", url: c.tcgplayer.url });
+    if (c.cardmarket?.url) links.push({ label: "Cardmarket", url: c.cardmarket.url });
+
+    return {
+      id: c.id,
+      name: c.name,
+      subtitle: [c.set?.name, c.number && `#${c.number}`, c.rarity].filter(Boolean).join(" · "),
+      image: c.images?.small,
+      imageLarge: c.images?.large,
+      prices,
+      links,
+      updatedAt: c.cardmarket?.updatedAt || c.tcgplayer?.updatedAt,
+    };
+  });
+}
+
+// ---------- Magic : api.scryfall.com ----------
+
+async function searchMtg(term) {
+  const fetchPrints = (q) => {
+    const params = new URLSearchParams({ q, unique: "prints", order: "usd", dir: "desc" });
+    return getJson(`https://api.scryfall.com/cards/search?${params}`);
+  };
+  let json;
+  try {
+    json = await fetchPrints(term);
+  } catch (e) {
+    if (!(e instanceof NotFound)) throw e;
+    // Rien en anglais : on retente dans toutes les langues (nom français, etc.).
+    json = await fetchPrints(`${term} lang:any`);
+  }
+  return (json.data || []).slice(0, PAGE_SIZE).map((c) => {
+    const p = c.prices || {};
+    const prices = [];
+    addPrice(prices, "TCGplayer · normale", p.usd, "USD");
+    addPrice(prices, "TCGplayer · foil", p.usd_foil, "USD");
+    addPrice(prices, "TCGplayer · etched", p.usd_etched, "USD");
+    addPrice(prices, "Cardmarket · normale", p.eur, "EUR");
+    addPrice(prices, "Cardmarket · foil", p.eur_foil, "EUR");
+
+    const img = c.image_uris || c.card_faces?.[0]?.image_uris || {};
+    const links = [];
+    if (c.purchase_uris?.tcgplayer) links.push({ label: "TCGplayer", url: c.purchase_uris.tcgplayer });
+    if (c.purchase_uris?.cardmarket) links.push({ label: "Cardmarket", url: c.purchase_uris.cardmarket });
+    if (c.scryfall_uri) links.push({ label: "Scryfall", url: c.scryfall_uri });
+
+    return {
+      id: c.id,
+      name: c.printed_name && c.printed_name !== c.name ? `${c.name} (${c.printed_name})` : c.name,
+      subtitle: [c.set_name, c.collector_number && `#${c.collector_number}`, c.rarity].filter(Boolean).join(" · "),
+      image: img.small || img.normal,
+      imageLarge: img.large || img.normal,
+      prices,
+      links,
+    };
+  });
+}
+
+// ---------- Yu-Gi-Oh! : db.ygoprodeck.com ----------
+
+async function searchYugioh(term) {
+  const params = new URLSearchParams({ fname: term, num: String(PAGE_SIZE), offset: "0" });
+  // YGOPRODeck renvoie 400 quand aucune carte ne correspond.
+  const json = await getJson(`https://db.ygoprodeck.com/api/v7/cardinfo.php?${params}`, {
+    notFoundStatuses: [400, 404],
+  });
+  return (json.data || []).map((c) => {
+    const p = c.card_prices?.[0] || {};
+    const prices = [];
+    addPrice(prices, "TCGplayer", p.tcgplayer_price, "USD");
+    addPrice(prices, "Cardmarket", p.cardmarket_price, "EUR");
+    addPrice(prices, "eBay", p.ebay_price, "USD");
+    addPrice(prices, "Amazon", p.amazon_price, "USD");
+    addPrice(prices, "CoolStuffInc", p.coolstuffinc_price, "USD");
+
+    const sets = (c.card_sets || [])
+      .map((s) => ({ ...s, price: num(s.set_price) }))
+      .filter((s) => s.price !== null)
+      .sort((a, b) => b.price - a.price);
+    const mostValuable = sets[0];
+    if (mostValuable) {
+      prices.push({
+        label: `Édition la plus chère · ${mostValuable.set_code} (${mostValuable.set_rarity})`,
+        value: mostValuable.price,
+        currency: "USD",
+      });
+    }
+
+    const img = c.card_images?.[0] || {};
+    return {
+      id: String(c.id),
+      name: c.name,
+      subtitle: [c.type, c.attribute, c.card_sets?.length && `${c.card_sets.length} éditions`]
+        .filter(Boolean)
+        .join(" · "),
+      image: img.image_url_small || img.image_url,
+      imageLarge: img.image_url,
+      prices,
+      links: c.ygoprodeck_url ? [{ label: "YGOPRODeck", url: c.ygoprodeck_url }] : [],
+    };
+  });
+}
+
+// ---------- Disney Lorcana : api.lorcast.com ----------
+
+async function searchLorcana(term) {
+  const params = new URLSearchParams({ q: term });
+  const json = await getJson(`https://api.lorcast.com/v0/cards/search?${params}`);
+  return (json.results || []).slice(0, PAGE_SIZE).map((c) => {
+    const prices = [];
+    addPrice(prices, "TCGplayer · normale", c.prices?.usd, "USD");
+    addPrice(prices, "TCGplayer · foil", c.prices?.usd_foil, "USD");
+    const img = c.image_uris?.digital || {};
+    const links = [];
+    if (c.tcgplayer_id) {
+      links.push({ label: "TCGplayer", url: `https://www.tcgplayer.com/product/${c.tcgplayer_id}` });
+    }
+    return {
+      id: c.id,
+      name: c.version ? `${c.name} – ${c.version}` : c.name,
+      subtitle: [c.set?.name, c.collector_number && `#${c.collector_number}`, c.rarity]
+        .filter(Boolean)
+        .join(" · "),
+      image: img.small || img.normal,
+      imageLarge: img.large || img.normal,
+      prices,
+      links,
+    };
+  });
+}
+
+const PROVIDERS = {
+  pokemon: searchPokemon,
+  mtg: searchMtg,
+  yugioh: searchYugioh,
+  lorcana: searchLorcana,
+};
+
+async function searchCards(gameId, term) {
+  const provider = PROVIDERS[gameId];
+  if (!provider) return null; // pas d'API : l'interface affiche des liens marché
+  try {
+    return await provider(term);
+  } catch (e) {
+    if (e instanceof NotFound) return [];
+    throw e;
+  }
+}
+
+// Valeur utilisée pour trier : le prix le plus élevé, ramené en EUR.
+function sortValue(card) {
+  let best = 0;
+  for (const p of card.prices) {
+    const eur = p.currency === "USD" ? p.value * USD_TO_EUR : p.value;
+    if (eur > best) best = eur;
+  }
+  return best;
+}
+
+// Lecture du nom d'une carte à partir d'une photo (OCR dans le navigateur).
+// La photo n'est envoyée à aucun serveur : Tesseract.js tourne localement.
+// La bibliothèque (~quelques Mo) n'est téléchargée qu'au premier scan.
+
+const TESSERACT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+const MAX_SIDE = 1600;
+
+// Jeux dont le nom de la carte est imprimé tout en haut.
+const NAME_ON_TOP = new Set(["pokemon", "mtg", "yugioh", "fab"]);
+
+// Mentions imprimées sur les cartes qui ne sont jamais le nom.
+const NOISE = /^(basic|base|stage ?\d?|niveau ?\d?|evolves? from.*|evolution.*|trainer|dresseur|supporter|item|objet|energy|energie|illus.*|weakness|resistance|retreat|faiblesse|retraite|creature.*|instant|sorcery|enchantment|artifact|legendary.*|effect|monster|spell card|trap card|character|action|leader|event)$/i;
+
+let tesseractLoading = null;
+let workerPromise = null;
+let progressCallback = null;
+
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  if (!tesseractLoading) {
+    tesseractLoading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = TESSERACT_URL;
+      s.onload = resolve;
+      s.onerror = () => {
+        tesseractLoading = null;
+        reject(new Error("Impossible de charger le module de lecture de photo (connexion requise au premier scan)."));
+      };
+      document.head.append(s);
+    });
+  }
+  return tesseractLoading;
+}
+
+function getWorker() {
+  if (!workerPromise) {
+    workerPromise = window.Tesseract.createWorker("eng", 1, {
+      logger: (m) => {
+        if (m.status === "recognizing text" && progressCallback) progressCallback(m.progress);
+      },
+    }).catch((e) => {
+      workerPromise = null;
+      throw new Error("Impossible de démarrer la lecture de photo.");
+    });
+  }
+  return workerPromise;
+}
+
+async function loadBitmap(file) {
+  if (window.createImageBitmap) {
+    try {
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      /* on retente avec <img> ci-dessous */
+    }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return img;
+  } catch {
+    throw new Error("Ce fichier n'est pas une image lisible.");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Redimensionne et passe en niveaux de gris contrastés pour aider l'OCR.
+function toCanvas(bitmap) {
+  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.filter = "grayscale(1) contrast(1.4)";
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function cleanLine(text) {
+  return text
+    .normalize("NFC")
+    .replace(/\b(HP|PV)\s*\d+|\d+\s*(HP|PV)\b/gi, " ") // points de vie Pokémon
+    .replace(/[^\p{L}\s'’,.&-]/gu, " ") // chiffres, symboles de mana, bruit
+    .replace(/\s+/g, " ")
+    .replace(/^(?:[\s'’,.&-]|\b\p{L}\b\s)+|(?:\s\b\p{L}\b|[\s'’,.&-])+$/gu, "") // lettres isolées aux extrémités
+    .trim();
+}
+
+function pickCandidates(lines, gameId) {
+  const candidates = lines
+    .map((l) => ({
+      text: cleanLine(l.text),
+      confidence: l.confidence,
+      top: l.bbox.y0,
+      height: l.bbox.y1 - l.bbox.y0,
+    }))
+    .filter(
+      (l) =>
+        l.confidence >= 55 &&
+        l.text.length >= 3 &&
+        l.text.length <= 45 &&
+        (l.text.match(/\p{L}/gu) || []).length >= 3 &&
+        !NOISE.test(l.text)
+    );
+
+  if (NAME_ON_TOP.has(gameId)) {
+    // Le nom est la première ligne lisible en haut de la carte.
+    candidates.sort((a, b) => a.top - b.top);
+  } else {
+    // Sinon, le nom est généralement le texte le plus gros.
+    candidates.sort((a, b) => b.height - a.height);
+  }
+
+  const seen = new Set();
+  const out = [];
+  for (const c of candidates) {
+    const key = c.text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(c.text);
+    if (out.length === 5) break;
+  }
+  return out;
+}
+
+// Renvoie jusqu'à 5 noms possibles, le plus probable en premier.
+async function scanCard(file, gameId, onProgress) {
+  const bitmap = await loadBitmap(file);
+  const canvas = toCanvas(bitmap);
+  bitmap.close?.();
+  await loadTesseract();
+  const worker = await getWorker();
+  progressCallback = onProgress;
+  try {
+    const { data } = await worker.recognize(canvas);
+    return pickCandidates(data.lines || [], gameId);
+  } finally {
+    progressCallback = null;
+  }
+}
+
+
+const $ = (sel) => document.querySelector(sel);
+const WATCHLIST_KEY = "cpc.watchlist.v1";
+
+const state = {
+  game: GAMES[0],
+  query: "",
+  results: [],
+  sort: "relevance",
+  requestId: 0,
+};
+
+// ---------- utilitaires ----------
+
+const formatters = {
+  EUR: new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }),
+  USD: new Intl.NumberFormat("fr-FR", { style: "currency", currency: "USD" }),
+};
+const formatPrice = (p) => formatters[p.currency].format(p.value);
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return node;
+}
+
+function externalLink(link, cls = "chip") {
+  return el("a", { class: cls, href: link.url, target: "_blank", rel: "noopener noreferrer" }, link.label, " ↗");
+}
+
+// ---------- liste de suivi (localStorage) ----------
+
+function loadWatchlist() {
+  try {
+    return JSON.parse(localStorage.getItem(WATCHLIST_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveWatchlist(list) {
+  try {
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+  } catch {
+    /* stockage indisponible (navigation privée) : on ignore */
+  }
+}
+
+const watchKey = (gameId, cardId) => `${gameId}:${cardId}`;
+
+function isWatched(gameId, cardId) {
+  return loadWatchlist().some((w) => w.key === watchKey(gameId, cardId));
+}
+
+function toggleWatch(card) {
+  const key = watchKey(state.game.id, card.id);
+  let list = loadWatchlist();
+  if (list.some((w) => w.key === key)) {
+    list = list.filter((w) => w.key !== key);
+  } else {
+    list.unshift({
+      key,
+      gameId: state.game.id,
+      cardId: card.id,
+      name: card.name,
+      subtitle: card.subtitle,
+      image: card.image,
+      price: card.prices[0] || null,
+      savedAt: new Date().toISOString(),
+    });
+  }
+  saveWatchlist(list);
+  renderWatchlist();
+}
+
+function renderWatchlist() {
+  const list = loadWatchlist();
+  const container = $("#watchlist");
+  $("#watch-count").textContent = list.length;
+  container.replaceChildren();
+  if (!list.length) {
+    container.append(el("p", { class: "muted" }, "Cliquez sur ☆ sur une carte pour la suivre ici."));
+    return;
+  }
+  for (const w of list) {
+    const game = getGame(w.gameId);
+    container.append(
+      el(
+        "div",
+        { class: "watch-item" },
+        w.image ? el("img", { src: w.image, alt: "", loading: "lazy" }) : el("div", { class: "thumb-placeholder" }),
+        el(
+          "div",
+          { class: "watch-info" },
+          el("strong", {}, w.name),
+          el("span", { class: "muted small" }, `${game.emoji} ${game.name}`),
+          el(
+            "span",
+            { class: "small" },
+            w.price ? `${formatPrice(w.price)} le ${new Date(w.savedAt).toLocaleDateString("fr-FR")}` : "Pas de prix"
+          )
+        ),
+        el(
+          "div",
+          { class: "watch-actions" },
+          el(
+            "button",
+            {
+              class: "btn-small",
+              title: "Revoir le prix actuel",
+              onclick: () => {
+                selectGame(w.gameId);
+                $("#search-input").value = w.name.replace(/\s*\(.*\)$/, "");
+                runSearch();
+                $("#watch-panel").removeAttribute("open");
+              },
+            },
+            "Actualiser"
+          ),
+          el(
+            "button",
+            {
+              class: "btn-small danger",
+              title: "Retirer",
+              "aria-label": `Retirer ${w.name}`,
+              onclick: () => {
+                saveWatchlist(loadWatchlist().filter((x) => x.key !== w.key));
+                renderWatchlist();
+                renderResults();
+              },
+            },
+            "✕"
+          )
+        )
+      )
+    );
+  }
+}
+
+// ---------- sélection du jeu ----------
+
+function renderGameTiles() {
+  const grid = $("#games");
+  grid.replaceChildren(
+    ...GAMES.map((g, i) =>
+      el(
+        "button",
+        {
+          class: "game-tile" + (g.id === state.game.id ? " active" : ""),
+          style: `--accent:${g.color}`,
+          "data-game": g.id,
+          "aria-pressed": String(g.id === state.game.id),
+          onclick: () => {
+            selectGame(g.id);
+            $("#search-input").focus();
+          },
+        },
+        el("span", { class: "rank" }, `#${i + 1}`),
+        el("span", { class: "emoji", "aria-hidden": "true" }, g.emoji),
+        el("span", { class: "game-name" }, g.name),
+        el("span", { class: "badge " + (g.live ? "live" : "links") }, g.live ? "Prix en direct" : "Liens marchés")
+      )
+    )
+  );
+}
+
+function selectGame(id) {
+  const game = getGame(id);
+  if (game.id !== state.game.id) {
+    state.game = game;
+    state.results = [];
+    $("#results").replaceChildren();
+    $("#status").textContent = "";
+    $("#market-links").replaceChildren();
+    $("#scan-candidates").replaceChildren();
+  }
+  document.documentElement.style.setProperty("--game-accent", game.color);
+  $("#search-input").placeholder = game.placeholder;
+  $("#source").textContent = `Source : ${game.source}`;
+  $("#sort-label").hidden = !game.live;
+  renderGameTiles();
+}
+
+// ---------- recherche ----------
+
+function updateHash() {
+  const params = new URLSearchParams({ jeu: state.game.id });
+  if (state.query) params.set("q", state.query);
+  history.replaceState(null, "", `#${params}`);
+}
+
+async function runSearch() {
+  const query = $("#search-input").value.trim();
+  if (!query) {
+    $("#status").textContent = "Saisissez le nom d'une carte.";
+    return;
+  }
+  state.query = query;
+  updateHash();
+  const game = state.game;
+  const reqId = ++state.requestId;
+
+  $("#market-links").replaceChildren(
+    el("span", { class: "muted small" }, "Comparer aussi sur : "),
+    ...marketLinks(game, query).map((l) => externalLink(l))
+  );
+
+  if (!game.live) {
+    state.results = [];
+    $("#results").replaceChildren(
+      el(
+        "div",
+        { class: "notice" },
+        el("h3", {}, `${game.emoji} ${game.name}`),
+        el(
+          "p",
+          {},
+          "Aucune API de prix publique et gratuite n'existe pour ce jeu. Ouvrez directement les prix du marché pour « ",
+          el("strong", {}, query),
+          " » :"
+        ),
+        el("div", { class: "big-links" }, ...marketLinks(game, query).map((l) => externalLink(l, "btn-link")))
+      )
+    );
+    $("#status").textContent = "";
+    return;
+  }
+
+  $("#status").textContent = "Recherche en cours…";
+  $("#results").setAttribute("aria-busy", "true");
+  $("#results").replaceChildren(...Array.from({ length: 6 }, () => el("div", { class: "card skeleton" })));
+
+  try {
+    const results = await searchCards(game.id, query);
+    if (reqId !== state.requestId) return; // une recherche plus récente a été lancée
+    state.results = results;
+    $("#status").textContent = results.length
+      ? `${results.length} carte${results.length > 1 ? "s" : ""} trouvée${results.length > 1 ? "s" : ""}`
+      : `Aucune carte trouvée pour « ${query} ».`;
+    renderResults();
+  } catch (err) {
+    if (reqId !== state.requestId) return;
+    state.results = [];
+    $("#results").replaceChildren(
+      el("div", { class: "notice error" }, el("p", {}, `⚠️ ${err.message}`), el("p", { class: "small" }, "Les liens ci-dessus restent disponibles."))
+    );
+    $("#status").textContent = "";
+  } finally {
+    if (reqId === state.requestId) $("#results").removeAttribute("aria-busy");
+  }
+}
+
+function sortedResults() {
+  const list = [...state.results];
+  if (state.sort === "price-desc") list.sort((a, b) => sortValue(b) - sortValue(a));
+  if (state.sort === "price-asc") {
+    list.sort((a, b) => (sortValue(a) || Infinity) - (sortValue(b) || Infinity));
+  }
+  if (state.sort === "name") list.sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  return list;
+}
+
+function renderCard(card) {
+  const watched = isWatched(state.game.id, card.id);
+  const [main, ...others] = card.prices;
+  return el(
+    "article",
+    { class: "card" },
+    el(
+      "a",
+      { class: "card-img", href: card.imageLarge || card.image || "#", target: "_blank", rel: "noopener noreferrer" },
+      card.image ? el("img", { src: card.image, alt: card.name, loading: "lazy" }) : el("div", { class: "thumb-placeholder" }, "?")
+    ),
+    el(
+      "div",
+      { class: "card-body" },
+      el(
+        "div",
+        { class: "card-head" },
+        el("h3", {}, card.name),
+        el(
+          "button",
+          {
+            class: "star" + (watched ? " on" : ""),
+            title: watched ? "Ne plus suivre" : "Suivre cette carte",
+            "aria-label": watched ? `Ne plus suivre ${card.name}` : `Suivre ${card.name}`,
+            "aria-pressed": String(watched),
+            onclick: () => {
+              toggleWatch(card);
+              renderResults();
+            },
+          },
+          watched ? "★" : "☆"
+        )
+      ),
+      el("p", { class: "muted small" }, card.subtitle),
+      main
+        ? el("p", { class: "main-price" }, formatPrice(main), el("span", { class: "muted small" }, ` ${main.label}`))
+        : el("p", { class: "muted" }, "Pas de prix disponible"),
+      others.length
+        ? el(
+            "ul",
+            { class: "price-list" },
+            ...others.map((p) => el("li", {}, el("span", {}, p.label), el("strong", {}, formatPrice(p))))
+          )
+        : null,
+      card.updatedAt ? el("p", { class: "muted tiny" }, `Mis à jour : ${card.updatedAt}`) : null,
+      card.links.length ? el("div", { class: "card-links" }, ...card.links.map((l) => externalLink(l))) : null
+    )
+  );
+}
+
+function renderResults() {
+  if (!state.game.live || !state.results.length) return;
+  $("#results").replaceChildren(...sortedResults().map(renderCard));
+}
+
+// ---------- recherche par photo ----------
+
+function renderScanCandidates(candidates, current) {
+  $("#scan-candidates").replaceChildren(
+    el("span", { class: "muted small" }, "Lu sur la photo : "),
+    ...candidates.map((text) =>
+      el(
+        "button",
+        {
+          type: "button",
+          class: "chip" + (text === current ? " current" : ""),
+          onclick: () => {
+            $("#search-input").value = text;
+            renderScanCandidates(candidates, text);
+            runSearch();
+          },
+        },
+        text
+      )
+    )
+  );
+}
+
+async function handleScan(file) {
+  if (!file) return;
+  const btn = $("#scan-btn");
+  btn.disabled = true;
+  $("#scan-candidates").replaceChildren();
+  $("#status").textContent = "Lecture de la photo…";
+  try {
+    const candidates = await scanCard(file, state.game.id, (progress) => {
+      $("#status").textContent = `Lecture de la photo… ${Math.round(progress * 100)} %`;
+    });
+    if (!candidates.length) {
+      $("#status").textContent =
+        "Nom illisible sur la photo. Reprenez-la bien à plat, de près, avec un bon éclairage et sans reflet.";
+      return;
+    }
+    $("#search-input").value = candidates[0];
+    renderScanCandidates(candidates, candidates[0]);
+    await runSearch();
+  } catch (err) {
+    $("#status").textContent = `⚠️ ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- initialisation ----------
+
+function init() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  state.game = getGame(params.get("jeu") || GAMES[0].id);
+  selectGame(state.game.id);
+  renderWatchlist();
+
+  $("#search-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    runSearch();
+  });
+  $("#scan-btn").addEventListener("click", () => $("#scan-input").click());
+  $("#scan-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = ""; // permet de rescanner la même photo
+    handleScan(file);
+  });
+  $("#sort").addEventListener("change", (e) => {
+    state.sort = e.target.value;
+    renderResults();
+  });
+
+  const q = params.get("q");
+  if (q) {
+    $("#search-input").value = q;
+    runSearch();
+  }
+}
+
+init();
+})();
+</script>
+  </body>
+</html>
