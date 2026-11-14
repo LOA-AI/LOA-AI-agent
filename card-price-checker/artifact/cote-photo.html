@@ -1,0 +1,366 @@
+<title>Cote Photo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+  /* Layout : une seule colonne pensée pour le pouce — le bouton photo en haut, la cote juste en dessous. */
+  :root {
+    --bg: #eef1f9;
+    --surface: #ffffff;
+    --ink: #141a33;
+    --muted: #5a6282;
+    --line: #d5daea;
+    --accent: #2f4bd8;
+    --on-accent: #ffffff;
+    --price: #17734a;
+    --tag: #f5c400;
+    --on-tag: #2b2300;
+    --warn: #b3261e;
+    --font-display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1324; --surface: #191e36; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
+      --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1324; --surface: #191e36; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
+    --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+  .page {
+    max-width: 520px; margin: 0 auto; padding-block: 20px 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  h1 { font-family: var(--font-display); font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0; }
+  p { margin: 0; }
+  .lede { color: var(--muted); }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.85rem; }
+
+  .actions { display: flex; flex-direction: column; gap: 8px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 56px; padding: 12px 18px; border-radius: 14px; border: 2px solid transparent;
+    font: 600 1.05rem var(--font-body); cursor: pointer; text-align: center;
+  }
+  .btn-main { background: var(--accent); color: var(--on-accent); min-height: 72px; font-size: 1.2rem; }
+  .btn-alt { background: transparent; color: var(--ink); border-color: var(--line); min-height: 48px; font-size: 0.95rem; }
+  .btn:focus-within, .btn:focus-visible, a:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
+  .btn[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
+  .btn svg { width: 26px; height: 26px; flex-shrink: 0; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+  .status { min-height: 1.4em; font-weight: 500; }
+  .status.error { color: var(--warn); }
+
+  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .result-head { display: flex; gap: 14px; align-items: flex-start; }
+  .thumb { width: 84px; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); flex-shrink: 0; background: var(--bg); }
+  .who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .who h2 { font-size: 1.25rem; overflow-wrap: anywhere; }
+  .badge { align-self: flex-start; background: var(--tag); color: var(--on-tag); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+  .cote { border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 2px; }
+  .cote-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .cote-value { font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; color: var(--price); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .links a { color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+
+  .history { display: flex; flex-direction: column; gap: 8px; }
+  .history ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .history li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .history li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .history li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; align-self: flex-start; }
+  .spinner { width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; display: inline-block; vertical-align: -3px; margin-right: 8px; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+</style>
+
+<main class="page">
+  <header>
+    <h1>Cote Photo</h1>
+    <p class="lede">Photographiez une carte à collectionner : Claude la reconnaît et vous donne sa cote estimée.</p>
+  </header>
+
+  <div class="actions" id="actions">
+    <label class="btn btn-main" id="shoot-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      Photographier une carte
+      <input class="visually-hidden" id="shoot-input" type="file" accept="image/*" capture="environment">
+    </label>
+    <label class="btn btn-alt" id="pick-label">
+      Choisir une photo existante
+      <input class="visually-hidden" id="pick-input" type="file" accept="image/*">
+    </label>
+  </div>
+
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <section class="result" id="result" aria-label="Résultat">
+    <div class="result-head">
+      <img class="thumb" id="r-thumb" alt="" hidden>
+      <div class="who">
+        <span class="badge" id="r-badge">Exemple d'affichage</span>
+        <h2 id="r-name">Dracaufeu</h2>
+        <p class="muted small" id="r-meta">Pokémon · Set de Base · 4/102 · Rare holo · Français</p>
+      </div>
+    </div>
+    <div class="cote">
+      <span class="cote-label" id="r-cote-label">Cote estimée (bon état, non gradée)</span>
+      <span class="cote-value" id="r-cote">— €</span>
+      <p class="small muted" id="r-notes">Votre résultat s'affichera ici : nom, édition, fourchette de prix et liens vers les ventes réelles.</p>
+    </div>
+    <div class="links" id="r-links"></div>
+  </section>
+
+  <section class="history" id="history" hidden>
+    <h2>Dernières cartes</h2>
+    <ul id="history-list"></ul>
+    <button class="link-btn" id="history-clear" type="button">Effacer la liste</button>
+  </section>
+
+  <p class="small muted">
+    La cote est une estimation donnée par Claude d'après ses connaissances : ce n'est pas un prix en direct et il peut dater.
+    Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés. L'état de la carte change beaucoup sa valeur.
+  </p>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const HISTORY_KEY = "cote-photo.history.v1";
+  const enc = encodeURIComponent;
+
+  // Places de marché par jeu (mêmes adresses que l'application Cote des Cartes).
+  const GAMES = {
+    pokemon: { name: "Pokémon", tcg: "pokemon", cm: "Pokemon" },
+    magic: { name: "Magic: The Gathering", tcg: "magic", cm: "Magic" },
+    yugioh: { name: "Yu-Gi-Oh!", tcg: "yugioh", cm: "YuGiOh" },
+    lorcana: { name: "Disney Lorcana", tcg: "lorcana-tcg", cm: "Lorcana" },
+    onepiece: { name: "One Piece Card Game", tcg: "one-piece-card-game", cm: "OnePiece" },
+    dragonball: { name: "Dragon Ball Super", tcg: "dragon-ball-super-fusion-world", cm: "DragonBallSuper" },
+    digimon: { name: "Digimon Card Game", tcg: "digimon-card-game", cm: "Digimon" },
+    fleshandblood: { name: "Flesh and Blood", tcg: "flesh-and-blood-tcg", cm: "FleshAndBlood" },
+    starwars: { name: "Star Wars: Unlimited", tcg: "star-wars-unlimited", cm: "StarWarsUnlimited" },
+    sport: { name: "Carte de sport" },
+    autre: { name: "Autre" },
+  };
+
+  const PROMPT = `Tu es un expert en cartes à collectionner. La photo jointe montre une carte (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, Disney Lorcana, One Piece, Dragon Ball Super, Digimon, Flesh and Blood, Star Wars: Unlimited, carte de sport, ou autre).
+
+Identifie la carte le plus précisément possible (nom, extension, numéro, rareté, version, langue) à partir de ce qui est visible, puis estime sa valeur de marché actuelle en euros pour un exemplaire non gradé en bon état (near mint), d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Donne une fourchette réaliste, large si tu hésites entre plusieurs versions.
+
+Réponds uniquement avec un objet JSON, sans autre texte, de cette forme :
+{"identifiee": true, "nom": "nom imprimé sur la carte", "nom_anglais": "nom anglais officiel de la carte", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "nom de l'extension ou de la série", "numero": "numéro de collection ou chaîne vide", "rarete": "rareté et version (holo, reverse, foil, 1ère édition...)", "langue": "langue de la carte", "prix_min_eur": 0, "prix_max_eur": 0, "confiance": "haute|moyenne|faible", "remarques": "une ou deux phrases en français : ce qui fait varier le prix, doute sur la version, défaut visible sur la photo"}
+
+Si l'image ne montre pas de carte à collectionner ou est illisible, réponds {"identifiee": false, "remarques": "explication courte en français"}.
+Exemple : {"identifiee": true, "nom": "Dracaufeu", "nom_anglais": "Charizard", "jeu": "pokemon", "extension": "Set de Base", "numero": "4/102", "rarete": "Rare holo", "langue": "Français", "prix_min_eur": 250, "prix_max_eur": 600, "confiance": "moyenne", "remarques": "La 1ère édition vaut beaucoup plus. L'état des bords et du holo change fortement le prix."}`;
+
+  const ERROR_COPY = {
+    not_granted: "Vous n'avez pas autorisé cette page à utiliser Claude. Rechargez la page pour réessayer.",
+    sampling_disabled: "Claude n'est pas disponible pour ce compte.",
+    images_unavailable: "L'envoi de photos n'est pas disponible ici. Ouvrez cette page dans l'application Claude ou sur claude.ai.",
+    image_rejected: "Cette photo n'a pas pu être lue. Essayez-en une autre (JPEG ou PNG).",
+    rate_limited: "Trop de demandes ou limite d'utilisation atteinte. Réessayez un peu plus tard.",
+    session_expired: "Votre session a expiré. Reconnectez-vous à Claude puis réessayez.",
+    refused: "Claude n'a pas pu traiter cette photo. Essayez avec une autre.",
+    invalid_json: "La réponse n'a pas pu être lue. Reprenez la photo pour réessayer.",
+  };
+
+  const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
+  const fmt = (n) => (n >= 20 ? euro.format(Math.round(n)).replace(/,00/, "") : euro.format(n));
+  const str = (v) => (typeof v === "string" ? v.trim() : "");
+  const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
+
+  function range(min, max) {
+    if (min === null && max === null) return "Cote inconnue";
+    if (min === null || max === null || min === max) return fmt(min ?? max);
+    return `${fmt(Math.min(min, max))} – ${fmt(Math.max(min, max))}`;
+  }
+
+  function marketLinks(card) {
+    const game = GAMES[card.jeu] || GAMES.autre;
+    const english = card.nom_anglais || card.nom;
+    const precise = [card.nom, card.extension, card.numero].filter(Boolean).join(" ");
+    const links = [];
+    if (game.cm) links.push(["Cardmarket", `https://www.cardmarket.com/fr/${game.cm}/Products/Search?searchString=${enc(english)}`]);
+    links.push(["eBay, ventes réalisées", `https://www.ebay.fr/sch/i.html?_nkw=${enc(precise)}&LH_Sold=1&LH_Complete=1`]);
+    if (game.tcg) links.push(["TCGplayer", `https://www.tcgplayer.com/search/${game.tcg}/product?q=${enc(english)}`]);
+    return links;
+  }
+
+  function setStatus(text, { busy = false, error = false } = {}) {
+    const el = $("status");
+    el.className = "status" + (error ? " error" : "");
+    el.replaceChildren();
+    if (busy) {
+      const s = document.createElement("span");
+      s.className = "spinner";
+      el.append(s);
+    }
+    el.append(text);
+  }
+
+  function setBusy(busy) {
+    for (const id of ["shoot-label", "pick-label"]) $(id).setAttribute("aria-disabled", String(busy));
+    for (const id of ["shoot-input", "pick-input"]) $(id).disabled = busy;
+  }
+
+  function showCard(card, thumbUrl) {
+    const game = GAMES[card.jeu] || GAMES.autre;
+    const badge = $("r-badge");
+    badge.hidden = false;
+    badge.textContent = { haute: "Identification sûre", moyenne: "Identification probable", faible: "Identification incertaine" }[card.confiance] || "Identification probable";
+    $("r-name").textContent = card.nom_anglais && card.nom_anglais.toLowerCase() !== card.nom.toLowerCase() ? `${card.nom} (${card.nom_anglais})` : card.nom;
+    $("r-meta").textContent = [game.name, card.extension, card.numero, card.rarete, card.langue].filter(Boolean).join(" · ");
+    $("r-cote-label").textContent = "Cote estimée (bon état, non gradée)";
+    $("r-cote").textContent = range(card.min, card.max);
+    $("r-notes").textContent = card.remarques;
+    $("r-links").replaceChildren(
+      ...marketLinks(card).map(([label, url]) => {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = label;
+        return a;
+      })
+    );
+    if (thumbUrl) {
+      $("r-thumb").src = thumbUrl;
+      $("r-thumb").alt = `Photo de ${card.nom}`;
+      $("r-thumb").hidden = false;
+    }
+  }
+
+  function showNotCard(remarques, thumbUrl) {
+    $("r-badge").hidden = true;
+    $("r-name").textContent = "Carte non reconnue";
+    $("r-meta").textContent = "";
+    $("r-cote-label").textContent = "Cote";
+    $("r-cote").textContent = "—";
+    $("r-notes").textContent = remarques || "Reprenez la photo : carte entière, à plat, bien éclairée, sans reflet.";
+    $("r-links").replaceChildren();
+    if (thumbUrl) {
+      $("r-thumb").src = thumbUrl;
+      $("r-thumb").alt = "Photo envoyée";
+      $("r-thumb").hidden = false;
+    }
+  }
+
+  // ---- historique (ce navigateur uniquement) ----
+  function loadHistory() {
+    try {
+      const list = JSON.parse(localStorage.getItem(HISTORY_KEY));
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveHistory(list) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 20)));
+    } catch { /* stockage indisponible : la page fonctionne sans */ }
+  }
+  function renderHistory() {
+    const list = loadHistory();
+    $("history").hidden = list.length === 0;
+    $("history-list").replaceChildren(
+      ...list.map((h) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span");
+        a.textContent = [h.nom, h.extension].filter(Boolean).join(" · ");
+        const b = document.createElement("span");
+        b.textContent = h.cote;
+        li.append(a, b);
+        return li;
+      })
+    );
+  }
+
+  // ---- analyse ----
+  let sample = null;
+  let thumbUrl = null;
+
+  async function analyse(file) {
+    if (!file) return;
+    if (!sample) {
+      setStatus("La lecture de photo n'est pas disponible ici. Ouvrez cette page en étant connecté à Claude.", { error: true });
+      return;
+    }
+    setBusy(true);
+    setStatus("Analyse de la carte… (10 à 30 secondes)", { busy: true });
+    if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+    thumbUrl = URL.createObjectURL(file);
+    try {
+      const raw = await sample.json(PROMPT, { images: file });
+      const data = raw && typeof raw === "object" ? raw : {};
+      if (!data.identifiee || !str(data.nom)) {
+        showNotCard(str(data.remarques), thumbUrl);
+        setStatus("");
+        return;
+      }
+      const card = {
+        nom: str(data.nom),
+        nom_anglais: str(data.nom_anglais),
+        jeu: GAMES[str(data.jeu)] ? str(data.jeu) : "autre",
+        extension: str(data.extension),
+        numero: str(data.numero),
+        rarete: str(data.rarete),
+        langue: str(data.langue),
+        min: num(data.prix_min_eur),
+        max: num(data.prix_max_eur),
+        confiance: str(data.confiance),
+        remarques: str(data.remarques),
+      };
+      showCard(card, thumbUrl);
+      setStatus("");
+      saveHistory([{ nom: card.nom, extension: card.extension, cote: range(card.min, card.max) }, ...loadHistory()]);
+      renderHistory();
+      $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "cancelled") setStatus("");
+      else setStatus(ERROR_COPY[code] || "L'analyse a échoué. Vérifiez votre connexion puis réessayez.", { error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  for (const id of ["shoot-input", "pick-input"]) {
+    $(id).addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      analyse(file);
+    });
+  }
+  $("history-clear").addEventListener("click", () => {
+    saveHistory([]);
+    renderHistory();
+  });
+
+  renderHistory();
+
+  (async () => {
+    sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+    if (!sample) {
+      setStatus("La lecture de photo n'est pas disponible ici. Ouvrez cette page en étant connecté à Claude.", { error: true });
+      return;
+    }
+    const limits = await sample.limits().catch(() => null);
+    if (!limits || !limits.images) {
+      sample = null;
+      setStatus("L'envoi de photos n'est pas disponible dans cette vue. Ouvrez la page sur claude.ai ou dans l'application Claude.", { error: true });
+    }
+  })();
+})();
+</script>
