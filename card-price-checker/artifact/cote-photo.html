@@ -2,10 +2,11 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap">
 <style>
-  /* Layout : une seule colonne pensée pour le pouce — le bouton photo en haut, la cote juste en dessous. */
+  /* Layout : une colonne pensée pour le pouce — deux façons de demander (photo, noms), puis une liste de fiches repliables. */
   :root {
     --bg: #eef1f9;
     --surface: #ffffff;
+    --sunken: #e4e8f4;
     --ink: #141a33;
     --muted: #5a6282;
     --line: #d5daea;
@@ -20,13 +21,13 @@
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0f1324; --surface: #191e36; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
+      --bg: #0f1324; --surface: #191e36; --sunken: #121730; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
       --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0f1324; --surface: #191e36; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
+    --bg: #0f1324; --surface: #191e36; --sunken: #121730; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
     --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
     color-scheme: dark;
   }
@@ -34,55 +35,75 @@
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
   .page {
-    max-width: 520px; margin: 0 auto; padding-block: 20px 32px;
+    max-width: 540px; margin: 0 auto; padding-block: 18px 32px;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    display: flex; flex-direction: column; gap: 16px;
+    display: flex; flex-direction: column; gap: 14px;
   }
-  h1 { font-family: var(--font-display); font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; }
+  h1 { font-family: var(--font-display); font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
   h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0; }
   p { margin: 0; }
-  .lede { color: var(--muted); }
   .muted { color: var(--muted); }
   .small { font-size: 0.85rem; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  :focus-visible, .btn:focus-within { outline: 3px solid var(--tag); outline-offset: 2px; }
 
-  .actions { display: flex; flex-direction: column; gap: 8px; }
+  /* ---- demander une cote ---- */
+  .ask { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .ask-photo { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
   .btn {
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    min-height: 56px; padding: 12px 18px; border-radius: 14px; border: 2px solid transparent;
-    font: 600 1.05rem var(--font-body); cursor: pointer; text-align: center;
+    min-height: 52px; padding: 10px 16px; border-radius: 12px; border: 2px solid transparent;
+    font: 600 1rem var(--font-body); cursor: pointer; text-align: center;
   }
-  .btn-main { background: var(--accent); color: var(--on-accent); min-height: 72px; font-size: 1.2rem; }
-  .btn-alt { background: transparent; color: var(--ink); border-color: var(--line); min-height: 48px; font-size: 0.95rem; }
-  .btn:focus-within, .btn:focus-visible, a:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
-  .btn[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
-  .paste { min-height: 48px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--line); background: var(--surface); color: var(--ink); font: 500 1rem var(--font-body); text-align: center; width: 100%; }
-  .paste::placeholder { color: var(--muted); }
-  .paste:focus { outline: 3px solid var(--tag); outline-offset: 2px; }
-  .btn svg { width: 26px; height: 26px; flex-shrink: 0; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .btn-main { background: var(--accent); color: var(--on-accent); min-height: 60px; font-size: 1.1rem; }
+  .btn-alt { background: var(--sunken); color: var(--ink); min-height: 60px; }
+  .btn-go { background: var(--ink); color: var(--bg); width: 100%; }
+  .btn[aria-disabled="true"], .btn:disabled { opacity: 0.5; pointer-events: none; }
+  .btn svg { width: 24px; height: 24px; flex-shrink: 0; }
+  .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .names {
+    width: 100%; min-height: 104px; resize: vertical; padding: 12px 14px; border-radius: 12px;
+    border: 2px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem/1.5 var(--font-body);
+  }
+  .names::placeholder { color: var(--muted); }
+  .names:focus { outline: none; border-color: var(--accent); }
 
-  .status { min-height: 1.4em; font-weight: 500; }
+  .status { font-weight: 500; }
+  .status:empty { display: none; }
   .status.error { color: var(--warn); }
+  .spinner { width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; display: inline-block; vertical-align: -3px; margin-right: 8px; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ---- résultats ---- */
   .photos { display: flex; gap: 8px; overflow-x: auto; }
-  .photos img { height: 96px; width: auto; max-width: none; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
-  .total { background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .photos img { height: 88px; width: auto; max-width: none; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
+  .total { background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
   .total strong { font-family: var(--font-display); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-  .results { display: flex; flex-direction: column; gap: 12px; }
-  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-  .who h2 { font-size: 1.25rem; overflow-wrap: anywhere; }
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .badge { background: var(--tag); color: var(--on-tag); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
-  .badge.plain { background: transparent; color: var(--muted); border: 1px solid var(--line); }
-  .block { border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-  .label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-  .cote-value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--price); font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .rarity-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; }
-  .pips { display: inline-flex; gap: 4px; }
-  .pips i { width: 18px; height: 8px; border-radius: 2px; background: var(--line); }
+  .results { display: flex; flex-direction: column; gap: 10px; }
+  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .result > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .result > summary::-webkit-details-marker { display: none; }
+  .sum-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .who h2 { font-size: 1.15rem; overflow-wrap: anywhere; }
+  .sum-price { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
+  .cote-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--price); font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+  .sum-bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rarity-line { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; min-width: 0; }
+  .pips { display: inline-flex; gap: 3px; flex-shrink: 0; }
+  .pips i { width: 14px; height: 7px; border-radius: 2px; background: var(--line); }
   .pips i.on { background: var(--tag); }
+  .more { color: var(--accent); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .more::after { content: " ▾"; }
+  .result[open] .more::after { content: " ▴"; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { background: var(--tag); color: var(--on-tag); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+  .badge.plain { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .details { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .block { border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .grades { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .grades th { text-align: left; font-weight: 500; padding: 7px 8px 7px 0; }
   .grades td { text-align: right; padding: 7px 0 7px 8px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
@@ -90,39 +111,50 @@
   .grades tr.current th, .grades tr.current td { color: var(--price); }
   .grades tr.current th::after { content: " ← votre carte"; font-size: 0.78rem; font-weight: 600; }
   .links { display: flex; flex-wrap: wrap; gap: 8px; }
-  .links a { color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+  .links a { color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 0.88rem; text-decoration: none; }
+  .skeleton { height: 92px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(90deg, var(--surface) 25%, var(--sunken) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
 
-  .history { display: flex; flex-direction: column; gap: 8px; }
+  .history { display: flex; flex-direction: column; gap: 6px; }
   .history ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .history li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .history li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
   .history li span:first-child { min-width: 0; overflow-wrap: anywhere; }
   .history li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
   .link-btn { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; align-self: flex-start; }
-  .spinner { width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; display: inline-block; vertical-align: -3px; margin-right: 8px; animation: spin 0.9s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .spinner, .skeleton { animation: none; } }
 </style>
 
 <main class="page">
   <header>
     <h1>Cote Photo</h1>
-    <p class="lede">Photographiez une ou plusieurs cartes à collectionner : Claude les reconnaît, détaille leur rareté et estime leur cote selon l'état.</p>
+    <p class="muted">La cote de vos cartes à collectionner, par photo ou par nom.</p>
   </header>
 
-  <div class="actions" id="actions">
-    <label class="btn btn-main" id="shoot-label">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
-      Photographier des cartes
-      <input class="visually-hidden" id="shoot-input" type="file" accept="image/*" capture="environment">
-    </label>
-    <label class="btn btn-alt" id="pick-label">
-      Choisir une ou plusieurs photos
-      <input class="visually-hidden" id="pick-input" type="file" accept="image/*" multiple>
-    </label>
-    <label class="visually-hidden" for="paste-input">Coller une photo</label>
-    <input class="paste" id="paste-input" type="text" inputmode="none" autocomplete="off" placeholder="Ou collez une photo ici">
-    <p class="small muted">Plusieurs cartes sur la même photo, c'est possible : posez-les à plat, côte à côte, sans qu'elles se chevauchent.</p>
-  </div>
+  <section class="ask" aria-label="Demander une cote">
+    <div class="ask-photo">
+      <label class="btn btn-main" id="shoot-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        Photographier
+        <input class="visually-hidden" id="shoot-input" type="file" accept="image/*" capture="environment">
+      </label>
+      <label class="btn btn-alt" id="pick-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 3 3 3-3 5 5"/></svg>
+        Galerie
+        <input class="visually-hidden" id="pick-input" type="file" accept="image/*" multiple>
+      </label>
+    </div>
+    <p class="small muted" id="photo-hint">Plusieurs cartes sur une photo, c'est possible : à plat, côte à côte, sans chevauchement.</p>
+
+    <div class="or" aria-hidden="true">ou par nom</div>
+
+    <form id="names-form">
+      <label class="visually-hidden" for="names-input">Noms des cartes, une par ligne</label>
+      <textarea class="names" id="names-input" rows="3" autocomplete="off" autocapitalize="sentences" spellcheck="false"
+        placeholder="Une carte par ligne, par exemple :&#10;Dracaufeu Set de Base&#10;Black Lotus Alpha, jouée&#10;Luffy OP01-003"></textarea>
+      <p class="small muted" style="margin: 6px 0 10px">Précisez si vous voulez l'extension, le numéro ou l'état. Vous pouvez aussi coller une photo ici.</p>
+      <button class="btn btn-go" id="names-go" type="submit">Coter ces cartes</button>
+    </form>
+  </section>
 
   <p class="status" id="status" role="status" aria-live="polite"></p>
 
@@ -138,7 +170,7 @@
 
   <p class="small muted">
     Les cotes sont des estimations données par Claude d'après ses connaissances : ce ne sont pas des prix en direct et ils peuvent dater.
-    L'état est jugé sur la photo seulement ; une carte se note vraiment en main, recto et verso.
+    Sur photo, l'état est jugé à l'image seulement ; une carte se note vraiment en main, recto et verso.
     Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés.
   </p>
 </main>
@@ -147,6 +179,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const HISTORY_KEY = "cote-photo.history.v1";
+  const MAX_NAMES = 20;
   const enc = encodeURIComponent;
 
   // Places de marché par jeu (mêmes adresses que l'application Cote des Cartes).
@@ -174,30 +207,51 @@
   const GRADE_NAMES = { neuve: "neuve", excellente: "excellente", jouee: "jouée", abimee: "abîmée" };
   const RARITY_SCALE = ["", "Courante", "Peu courante", "Rare", "Très rare", "Exceptionnelle"];
 
-  const PROMPT = `Tu es un expert en cartes à collectionner (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, Disney Lorcana, One Piece, Dragon Ball Super, Digimon, Flesh and Blood, Star Wars: Unlimited, cartes de sport, autres).
+  const EXPERT = `Tu es un expert en cartes à collectionner (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, Disney Lorcana, One Piece, Dragon Ball Super, Digimon, Flesh and Blood, Star Wars: Unlimited, cartes de sport, autres).`;
+
+  const PER_CARD = `Rareté : donne la rareté imprimée (symbole ou mention), un niveau de 1 (courante) à 5 (exceptionnelle) qui tient compte de la version et du tirage, et une explication de deux phrases maximum : comment reconnaître cette rareté sur la carte, à quelle fréquence on la trouve, et ce qui distinguerait une version plus rare de la même carte.
+Cote : estime une fourchette de prix de marché actuelle en euros, non gradée, pour CHACUN des quatre états (neuve = near mint, excellente, jouee, abimee), d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Les prix doivent décroître avec l'état. Si la carte gagne nettement à être gradée, ajoute la fourchette pour une PSA 10, sinon mets null.`;
+
+  const FORMAT = `Réponds uniquement avec un objet JSON, sans autre texte, de cette forme :
+{"cartes": [{"position": "", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa10_eur": [min, max], "confiance": "haute|moyenne|faible", "remarques": ""}], "remarques_generales": ""}
+Tous les textes sont en français.`;
+
+  const PHOTO_PROMPT = `${EXPERT}
 
 Les photos jointes montrent une ou plusieurs cartes. Traite CHAQUE carte visible séparément, dans l'ordre de lecture (de gauche à droite, de haut en bas, photo après photo). N'invente pas de carte : ignore celles qui sont trop cachées ou illisibles et signale-le dans "remarques_generales".
 
 Pour chaque carte :
-1. Identifie-la précisément : nom, extension, numéro, langue, version.
-2. Rareté : donne la rareté imprimée (symbole ou mention), un niveau de 1 (courante) à 5 (exceptionnelle) qui tient compte de la version et du tirage, et une explication de deux phrases maximum : comment reconnaître cette rareté sur la carte, à quelle fréquence on la trouve, et ce qui distinguerait une version plus rare de la même carte.
-3. État : estime l'état visible sur la photo parmi "neuve" (near mint), "excellente", "jouee", "abimee", ou "indetermine" si la photo ne permet pas de juger (pochette, reflet, flou). Cite les défauts réellement visibles : coins, bords blanchis, rayures, plis, centrage.
-4. Cote : estime une fourchette de prix de marché actuelle en euros, non gradée, pour CHACUN des quatre états, d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Les prix doivent décroître avec l'état. Si la carte gagne nettement à être gradée, ajoute la fourchette pour une PSA 10, sinon mets null.
+Identification : nom, extension, numéro, langue, version. Dans "position", indique où se trouve la carte (ex. "photo 1, en haut à gauche").
+${PER_CARD}
+État : estime l'état visible sur la photo parmi "neuve", "excellente", "jouee", "abimee", ou "indetermine" si la photo ne permet pas de juger (pochette, reflet, flou). Dans "etat_remarques", cite les défauts réellement visibles : coins, bords blanchis, rayures, plis, centrage.
 
-Réponds uniquement avec un objet JSON, sans autre texte, de cette forme :
-{"cartes": [{"position": "où se trouve la carte, ex. photo 1, en haut à gauche", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "défauts visibles ou raison du doute", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa10_eur": [min, max], "confiance": "haute|moyenne|faible", "remarques": "doute sur la version, facteur de prix important, ou chaîne vide"}], "remarques_generales": ""}
+${FORMAT}
+Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarques_generales": "explication courte"}.`;
 
-Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarques_generales": "explication courte en français"}. Tous les textes sont en français.`;
+  const namesPrompt = (lines) => `${EXPERT}
+
+Une personne a écrit la liste de cartes ci-dessous, une carte par ligne. Chaque ligne peut contenir le nom (en français ou en anglais, parfois approximatif), l'extension, le numéro, la langue, la version ou l'état. Traite CHAQUE ligne séparément, dans l'ordre, et renvoie exactement une entrée par ligne reconnue.
+
+Pour chaque ligne :
+Identification : retrouve la carte. Si la ligne ne précise pas l'extension ou la version, choisis l'impression la plus courante ou la plus probable et dis-le dans "remarques", en citant les versions qui vaudraient nettement plus ou moins. Dans "position", recopie la ligne telle qu'elle a été écrite.
+${PER_CARD}
+État : si la ligne indique un état (neuve, mint, excellente, jouée, abîmée, played...), mets-le dans "etat_estime" ; sinon mets "indetermine". Laisse "etat_remarques" vide.
+Si une ligne ne correspond à aucune carte connue, ne crée pas d'entrée pour elle et cite-la dans "remarques_generales". N'invente jamais de carte.
+
+Liste :
+${lines.map((l, i) => `${i + 1}. ${l}`).join("\n")}
+
+${FORMAT}`;
 
   const ERROR_COPY = {
     not_granted: "Vous n'avez pas autorisé cette page à utiliser Claude. Rechargez la page pour réessayer.",
     sampling_disabled: "Claude n'est pas disponible pour ce compte.",
-    images_unavailable: "L'envoi de photos n'est pas disponible ici. Ouvrez cette page dans l'application Claude ou sur claude.ai.",
+    images_unavailable: "L'envoi de photos n'est pas disponible ici. Écrivez les noms des cartes, ou ouvrez la page dans l'application Claude.",
     image_rejected: "Une photo n'a pas pu être lue. Essayez-en une autre (JPEG ou PNG).",
     rate_limited: "Trop de demandes ou limite d'utilisation atteinte. Réessayez un peu plus tard.",
     session_expired: "Votre session a expiré. Reconnectez-vous à Claude puis réessayez.",
-    refused: "Claude n'a pas pu traiter cette photo. Essayez avec une autre.",
-    invalid_json: "La réponse n'a pas pu être lue. S'il y a beaucoup de cartes, photographiez-les en plusieurs fois.",
+    refused: "Claude n'a pas pu traiter cette demande. Essayez autrement.",
+    invalid_json: "La réponse n'a pas pu être lue. S'il y a beaucoup de cartes, demandez-les en plusieurs fois.",
   };
 
   const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
@@ -215,7 +269,7 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs || {})) if (v !== null && v !== undefined && v !== false) node.setAttribute(k, v);
+    for (const [k, v] of Object.entries(attrs || {})) if (v !== null && v !== undefined && v !== false) node.setAttribute(k, v === true ? "" : v);
     for (const c of children.flat()) if (c !== null && c !== undefined && c !== false) node.append(c);
     return node;
   }
@@ -241,7 +295,7 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
       confiance: str(raw.confiance),
       remarques: str(raw.remarques),
     };
-    // Cote mise en avant : celle de l'état constaté, sinon celle d'une carte neuve.
+    // Cote mise en avant : celle de l'état connu, sinon celle d'une carte neuve.
     card.coteEtat = card.etat && card.prix[card.etat] ? card.etat : card.prix.neuve ? "neuve" : null;
     card.cote = card.coteEtat ? card.prix[card.coteEtat] : null;
     return card;
@@ -258,72 +312,74 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
     return links;
   }
 
-  function renderCard(card, { example = false, index = null } = {}) {
+  // mode : "photo" (état jugé sur l'image) ou "noms" (état seulement s'il a été écrit).
+  function renderCard(card, { mode = "photo", example = false, index = null, open = true } = {}) {
     const title = card.nom_anglais && card.nom_anglais.toLowerCase() !== card.nom.toLowerCase() ? `${card.nom} (${card.nom_anglais})` : card.nom;
     const confidence = { haute: "Identification sûre", moyenne: "Identification probable", faible: "Identification incertaine" }[card.confiance] || "Identification probable";
-    const coteLabel = card.etat
-      ? `Cote estimée pour votre carte (état ${GRADE_NAMES[card.etat]})`
-      : "Cote estimée si la carte est neuve (état non jugeable sur la photo)";
+    const stateLabel = card.etat ? `état ${GRADE_NAMES[card.etat]}` : "si neuve";
+    const rarityText = [card.rarete, card.version].filter(Boolean).join(" · ") || "Rareté non précisée";
 
     return el(
-      "article",
-      { class: "result" },
+      "details",
+      { class: "result", open },
       el(
-        "div",
-        { class: "who" },
+        "summary",
+        {},
         el(
           "div",
           { class: "badges" },
-          example ? el("span", { class: "badge" }, "Exemple d'affichage") : el("span", { class: "badge" }, confidence),
-          index !== null && card.position ? el("span", { class: "badge plain" }, `Carte ${index + 1} · ${card.position}`) : null
+          example ? el("span", { class: "badge" }, "Exemple d'affichage") : card.confiance !== "haute" ? el("span", { class: "badge" }, confidence) : null,
+          index !== null && card.position ? el("span", { class: "badge plain" }, mode === "photo" ? `Carte ${index + 1} · ${card.position}` : `« ${card.position} »`) : null
         ),
-        el("h2", {}, title),
-        el("p", { class: "muted small" }, [GAMES[card.jeu].name, card.extension, card.numero, card.langue].filter(Boolean).join(" · "))
-      ),
-      el("div", { class: "block" }, el("span", { class: "label" }, coteLabel), el("span", { class: "cote-value" }, card.cote ? range(card.cote) : "Cote inconnue")),
-      el(
-        "div",
-        { class: "block" },
-        el("span", { class: "label" }, "Rareté"),
         el(
           "div",
-          { class: "rarity-line" },
-          el("span", {}, [card.rarete, card.version].filter(Boolean).join(" · ") || "Non précisée"),
-          card.rareteNiveau
-            ? el(
-                "span",
-                { class: "pips", role: "img", "aria-label": `Niveau de rareté ${card.rareteNiveau} sur 5` },
-                [1, 2, 3, 4, 5].map((i) => el("i", { class: i <= card.rareteNiveau ? "on" : null }))
-              )
-            : null,
-          card.rareteNiveau ? el("span", { class: "small muted" }, `${RARITY_SCALE[card.rareteNiveau]} (${card.rareteNiveau}/5)`) : null
+          { class: "sum-top" },
+          el("div", { class: "who" }, el("h2", {}, title), el("p", { class: "muted small" }, [GAMES[card.jeu].name, card.extension, card.numero, card.langue].filter(Boolean).join(" · "))),
+          el("div", { class: "sum-price" }, el("span", { class: "cote-value" }, card.cote ? range(card.cote) : "—"), el("span", { class: "muted small" }, card.cote ? stateLabel : "cote inconnue"))
         ),
-        card.rareteExplication ? el("p", { class: "small" }, card.rareteExplication) : null
+        el(
+          "div",
+          { class: "sum-bottom" },
+          el(
+            "span",
+            { class: "rarity-line" },
+            card.rareteNiveau
+              ? el("span", { class: "pips", role: "img", "aria-label": `Niveau de rareté ${card.rareteNiveau} sur 5` }, [1, 2, 3, 4, 5].map((i) => el("i", { class: i <= card.rareteNiveau ? "on" : null })))
+              : null,
+            el("span", {}, rarityText)
+          ),
+          el("span", { class: "more" }, "Détails")
+        )
       ),
       el(
         "div",
-        { class: "block" },
-        el("span", { class: "label" }, "Cote selon l'état"),
+        { class: "details" },
         el(
-          "table",
-          { class: "grades" },
-          el(
-            "tbody",
-            {},
-            GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))),
-            card.psa10 ? el("tr", {}, el("th", { scope: "row" }, "Gradée PSA 10"), el("td", {}, range(card.psa10))) : null
-          )
+          "div",
+          { class: "block" },
+          el("span", { class: "label" }, card.rareteNiveau ? `Rareté : ${RARITY_SCALE[card.rareteNiveau].toLowerCase()} (${card.rareteNiveau}/5)` : "Rareté"),
+          el("p", { class: "small" }, card.rareteExplication || rarityText)
         ),
-        card.etatRemarques ? el("p", { class: "small" }, el("strong", {}, "État vu sur la photo : "), card.etatRemarques) : null,
-        card.remarques ? el("p", { class: "small muted" }, card.remarques) : null
-      ),
-      example
-        ? null
-        : el(
-            "div",
-            { class: "links" },
-            marketLinks(card).map(([label, url]) => el("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, label))
-          )
+        el(
+          "div",
+          { class: "block" },
+          el("span", { class: "label" }, "Cote selon l'état"),
+          el(
+            "table",
+            { class: "grades" },
+            el(
+              "tbody",
+              {},
+              GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))),
+              card.psa10 ? el("tr", {}, el("th", { scope: "row" }, "Gradée PSA 10"), el("td", {}, range(card.psa10))) : null
+            )
+          ),
+          card.etatRemarques && mode === "photo" ? el("p", { class: "small" }, el("strong", {}, "État vu sur la photo : "), card.etatRemarques) : null,
+          !card.etat && mode === "noms" ? el("p", { class: "small muted" }, "Ajoutez l'état après le nom (par exemple « jouée ») pour une cote plus précise.") : null,
+          card.remarques ? el("p", { class: "small muted" }, card.remarques) : null
+        ),
+        example ? null : el("div", { class: "links" }, marketLinks(card).map(([label, url]) => el("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, label)))
+      )
     );
   }
 
@@ -334,7 +390,7 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
     if (!show) return;
     const sum = [priced.reduce((s, c) => s + c.cote[0], 0), priced.reduce((s, c) => s + c.cote[1], 0)];
     const missing = cards.length - priced.length;
-    $("total-label").textContent = `${cards.length} cartes reconnues` + (missing ? ` (${missing} sans cote)` : "");
+    $("total-label").textContent = `${cards.length} cartes` + (missing ? ` (${missing} sans cote)` : "");
     $("total-value").textContent = `Total : ${range(sum)}`;
   }
 
@@ -343,13 +399,7 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
     node.className = "status" + (error ? " error" : "");
     node.replaceChildren();
     if (busy) node.append(el("span", { class: "spinner" }));
-    node.append(text);
-  }
-
-  function setBusy(busy) {
-    for (const id of ["shoot-label", "pick-label"]) $(id).setAttribute("aria-disabled", String(busy));
-    for (const id of ["shoot-input", "pick-input"]) $(id).disabled = busy;
-    $("paste-input").disabled = busy;
+    if (text) node.append(text);
   }
 
   // ---- historique (ce navigateur uniquement) ----
@@ -374,89 +424,124 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
     );
   }
 
-  // ---- analyse ----
+  // ---- demandes à Claude ----
   let sample = null;
+  let canImages = false;
   let maxImages = 1;
+  let busy = false;
   let photoUrls = [];
+
+  function refreshControls() {
+    const photoOff = busy || !sample || !canImages;
+    for (const id of ["shoot-label", "pick-label"]) $(id).setAttribute("aria-disabled", String(photoOff));
+    for (const id of ["shoot-input", "pick-input"]) $(id).disabled = photoOff;
+    $("names-go").disabled = busy || !sample;
+  }
 
   function showPhotos(files) {
     photoUrls.forEach((u) => URL.revokeObjectURL(u));
     photoUrls = files.map((f) => URL.createObjectURL(f));
-    $("photos").hidden = false;
+    $("photos").hidden = files.length === 0;
     $("photos").replaceChildren(...photoUrls.map((u, i) => el("img", { src: u, alt: `Photo ${i + 1} envoyée` })));
   }
 
-  async function analyse(fileList) {
-    let files = Array.from(fileList || []);
-    if (!files.length) return;
+  async function run({ mode, prompt, images, waiting, extraNote, emptyHelp, expected }) {
+    if (busy) return;
     if (!sample) {
-      setStatus("La lecture de photo n'est pas disponible ici. Ouvrez cette page en étant connecté à Claude.", { error: true });
+      setStatus("Cette page a besoin de Claude : ouvrez-la en étant connecté à votre compte.", { error: true });
       return;
     }
-    const dropped = Math.max(0, files.length - maxImages);
-    files = files.slice(0, maxImages);
-    setBusy(true);
-    setStatus("Analyse des cartes… (jusqu'à une minute s'il y en a plusieurs)", { busy: true });
-    showPhotos(files);
+    busy = true;
+    refreshControls();
+    setStatus(waiting, { busy: true });
+    showPhotos(images || []);
     $("total").hidden = true;
-    $("results").replaceChildren();
+    $("results").replaceChildren(...Array.from({ length: Math.min(expected, 4) }, () => el("div", { class: "skeleton" })));
     try {
-      const raw = await sample.json(PROMPT, { images: files });
+      const raw = await sample.json(prompt, images ? { images } : {});
       const data = raw && typeof raw === "object" ? raw : {};
-      const cards = (Array.isArray(data.cartes) ? data.cartes : [])
-        .filter((c) => c && typeof c === "object")
-        .map(normalize)
-        .filter((c) => c.nom);
+      const cards = (Array.isArray(data.cartes) ? data.cartes : []).filter((c) => c && typeof c === "object").map(normalize).filter((c) => c.nom);
       const general = str(data.remarques_generales);
 
       if (!cards.length) {
-        $("results").replaceChildren(
-          el(
-            "article",
-            { class: "result" },
-            el("h2", {}, "Aucune carte reconnue"),
-            el("p", { class: "small" }, general || "Reprenez la photo : cartes entières, à plat, bien éclairées, sans reflet.")
-          )
-        );
+        $("results").replaceChildren(el("div", { class: "result" }, el("div", { class: "details", style: "padding-top:16px" }, el("h2", {}, "Aucune carte reconnue"), el("p", { class: "small" }, general || emptyHelp))));
         setStatus("");
         return;
       }
-
       renderTotal(cards);
-      $("results").replaceChildren(...cards.map((c, i) => renderCard(c, { index: cards.length > 1 ? i : null })));
-      const notes = [general, dropped ? `${dropped} photo(s) en trop n'ont pas été envoyées (maximum ${maxImages} à la fois).` : ""].filter(Boolean).join(" ");
-      setStatus(notes);
+      const many = cards.length > 1;
+      $("results").replaceChildren(...cards.map((c, i) => renderCard(c, { mode, index: many ? i : null, open: cards.length <= 2 })));
+      setStatus([general, extraNote].filter(Boolean).join(" "));
       saveHistory([...cards.map((c) => ({ nom: c.nom, extension: c.extension, cote: c.cote ? range(c.cote) : "—" })), ...loadHistory()]);
       renderHistory();
-      $("photos").scrollIntoView({ behavior: "smooth", block: "start" });
+      ($("total").hidden ? $("results") : $("total")).scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) {
       const code = e && e.code;
-      if (code === "cancelled") setStatus("");
-      else setStatus(ERROR_COPY[code] || "L'analyse a échoué. Vérifiez votre connexion puis réessayez.", { error: true });
+      $("results").replaceChildren();
+      setStatus(code === "cancelled" ? "" : ERROR_COPY[code] || "La demande a échoué. Vérifiez votre connexion puis réessayez.", { error: true });
     } finally {
-      setBusy(false);
+      busy = false;
+      refreshControls();
     }
+  }
+
+  function analysePhotos(fileList) {
+    const all = Array.from(fileList || []);
+    if (!all.length) return;
+    if (sample && !canImages) {
+      setStatus(ERROR_COPY.images_unavailable, { error: true });
+      return;
+    }
+    const files = all.slice(0, maxImages);
+    const dropped = all.length - files.length;
+    run({
+      mode: "photo",
+      prompt: PHOTO_PROMPT,
+      images: files,
+      expected: 2,
+      waiting: "Analyse des cartes… (jusqu'à une minute s'il y en a plusieurs)",
+      extraNote: dropped ? `${dropped} photo(s) en trop n'ont pas été envoyées (maximum ${maxImages} à la fois).` : "",
+      emptyHelp: "Reprenez la photo : cartes entières, à plat, bien éclairées, sans reflet.",
+    });
+  }
+
+  function quoteNames() {
+    const all = $("names-input").value.split(/\n|;/).map((l) => l.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim()).filter(Boolean);
+    if (!all.length) {
+      setStatus("Écrivez au moins un nom de carte, un par ligne.", { error: true });
+      $("names-input").focus();
+      return;
+    }
+    const lines = all.slice(0, MAX_NAMES).map((l) => l.slice(0, 160));
+    const dropped = all.length - lines.length;
+    run({
+      mode: "noms",
+      prompt: namesPrompt(lines),
+      expected: lines.length,
+      waiting: lines.length > 1 ? `Cotation de ${lines.length} cartes… (jusqu'à une minute)` : "Cotation de la carte…",
+      extraNote: dropped ? `Seules les ${MAX_NAMES} premières lignes ont été cotées ; relancez avec les ${dropped} restantes.` : "",
+      emptyHelp: "Aucun de ces noms ne correspond à une carte connue. Ajoutez le jeu ou l'extension pour aider.",
+    });
   }
 
   for (const id of ["shoot-input", "pick-input"]) {
     $(id).addEventListener("change", (e) => {
       const files = Array.from(e.target.files || []);
       e.target.value = "";
-      analyse(files);
+      analysePhotos(files);
     });
   }
-  // Coller une ou plusieurs photos, dans la zone prévue ou n'importe où sur la page.
+  $("names-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    quoteNames();
+  });
+  // Coller une photo n'importe où lance l'analyse ; coller du texte dans la zone de noms reste normal.
   document.addEventListener("paste", (e) => {
     const images = Array.from((e.clipboardData && e.clipboardData.files) || []).filter((f) => f.type.startsWith("image/"));
+    if (!images.length) return;
     e.preventDefault();
-    if (!images.length) {
-      setStatus("Le presse-papiers ne contient pas de photo. Copiez une image de carte, puis collez-la ici.", { error: true });
-      return;
-    }
-    if (!$("shoot-input").disabled) analyse(images);
+    analysePhotos(images);
   });
-  $("paste-input").addEventListener("input", (e) => { e.target.value = ""; });
-
   $("history-clear").addEventListener("click", () => {
     saveHistory([]);
     renderHistory();
@@ -467,30 +552,33 @@ Si aucune carte à collectionner n'est visible, réponds {"cartes": [], "remarqu
     renderCard(
       normalize({
         nom: "Dracaufeu", nom_anglais: "Charizard", jeu: "pokemon", extension: "Set de Base", numero: "4/102", langue: "Français",
-        version: "Holo, édition illimitée", rarete: "Rare holographique (étoile)", rarete_niveau: 4,
+        version: "Holo, édition illimitée", rarete: "Rare holographique", rarete_niveau: 4,
         rarete_explication: "L'étoile noire en bas à droite indique une carte rare ; l'illustration brillante en fait une holo, environ une par trois boosters à l'époque. Un tampon « Édition 1 » à gauche de l'illustration la rendrait bien plus rare.",
-        etat_estime: "excellente", etat_remarques: "Léger blanchiment des bords au dos, fines rayures sur la partie holo. (Chiffres d'illustration, pas une cote réelle.)",
-        prix_eur: { neuve: [350, 600], excellente: [200, 350], jouee: [110, 200], abimee: [50, 110] }, prix_psa10_eur: [3000, 6000],
+        etat_estime: "excellente", etat_remarques: "Léger blanchiment des bords, fines rayures sur la partie holo. (Chiffres d'illustration, pas une cote réelle.)",
+        prix_eur: { neuve: [350, 600], excellente: [200, 350], jouee: [110, 200], abimee: [50, 110] }, prix_psa10_eur: [3000, 6000], confiance: "haute",
       }),
-      { example: true }
+      { example: true, open: false }
     )
   );
   renderHistory();
+  refreshControls();
 
   (async () => {
     sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
     if (!sample) {
-      setStatus("La lecture de photo n'est pas disponible ici. Ouvrez cette page en étant connecté à Claude.", { error: true });
+      refreshControls();
+      setStatus("Cette page a besoin de Claude : ouvrez-la en étant connecté à votre compte.", { error: true });
       return;
     }
     const limits = await sample.limits().catch(() => null);
-    if (!limits || !limits.images) {
-      sample = null;
-      setStatus("L'envoi de photos n'est pas disponible dans cette vue. Ouvrez la page sur claude.ai ou dans l'application Claude.", { error: true });
-      return;
+    canImages = Boolean(limits && limits.images);
+    if (canImages) {
+      maxImages = Math.max(1, Number(limits.images.maxCount) || 1);
+      if (maxImages === 1) $("pick-input").removeAttribute("multiple");
+    } else {
+      $("photo-hint").textContent = "L'envoi de photos n'est pas disponible dans cette vue : écrivez les noms des cartes ci-dessous.";
     }
-    maxImages = Math.max(1, Number(limits.images.maxCount) || 1);
-    if (maxImages === 1) $("pick-input").removeAttribute("multiple");
+    refreshControls();
   })();
 })();
 </script>
