@@ -1,74 +1,85 @@
 <title>Cote Photo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
 <style>
-  /* Layout : une colonne pensée pour le pouce — deux façons de demander (photo, noms), puis une liste de fiches repliables. */
+  /* Layout : écran sombre d'application mobile — halo en haut, panneaux translucides arrondis,
+     valeur totale en grand, fiches à onglets, barre flottante en bas avec le bouton de scan. */
   :root {
-    --bg: #eef1f9;
-    --surface: #ffffff;
-    --sunken: #e4e8f4;
-    --ink: #141a33;
-    --muted: #5a6282;
-    --line: #d5daea;
-    --accent: #2f4bd8;
-    --on-accent: #ffffff;
-    --price: #17734a;
-    --tag: #f5c400;
-    --on-tag: #2b2300;
-    --warn: #b3261e;
-    --font-display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+    --bg: #0a1120;
+    --glow-a: rgba(47, 196, 178, 0.22);
+    --glow-b: rgba(126, 105, 255, 0.20);
+    --panel: rgba(255, 255, 255, 0.055);
+    --panel-strong: rgba(255, 255, 255, 0.11);
+    --line: rgba(255, 255, 255, 0.10);
+    --ink: #eef2fb;
+    --muted: #93a0b8;
+    --accent: #2fc4b2;
+    --on-accent: #04201c;
+    --gold: #f2c14e;
+    --dock: #131c33;
+    --warn: #ff8a80;
+    --font-display: "Sora", "Avenir Next", "Segoe UI", sans-serif;
     --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1324; --surface: #191e36; --sunken: #121730; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
-      --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
-      color-scheme: dark;
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #edf1f8; --glow-a: rgba(47, 196, 178, 0.28); --glow-b: rgba(126, 105, 255, 0.18);
+      --panel: #ffffff; --panel-strong: #e3e9f3; --line: #d5ddea; --ink: #121a2c; --muted: #5b6880;
+      --accent: #0d8576; --on-accent: #ffffff; --gold: #9a6200; --dock: #ffffff; --warn: #b3261e;
+      color-scheme: light;
     }
   }
-  :root[data-theme="dark"] {
-    --bg: #0f1324; --surface: #191e36; --sunken: #121730; --ink: #e9ecf8; --muted: #9ba3c4; --line: #2c3355;
-    --accent: #7d92ff; --on-accent: #0b1030; --price: #56d39a; --tag: #f5c400; --on-tag: #2b2300; --warn: #ff8a80;
-    color-scheme: dark;
+  :root[data-theme="light"] {
+    --bg: #edf1f8; --glow-a: rgba(47, 196, 178, 0.28); --glow-b: rgba(126, 105, 255, 0.18);
+    --panel: #ffffff; --panel-strong: #e3e9f3; --line: #d5ddea; --ink: #121a2c; --muted: #5b6880;
+    --accent: #0d8576; --on-accent: #ffffff; --gold: #9a6200; --dock: #ffffff; --warn: #b3261e;
+    color-scheme: light;
   }
 
   * { box-sizing: border-box; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+  body {
+    background:
+      radial-gradient(120% 340px at 15% -60px, var(--glow-a), transparent 70%),
+      radial-gradient(120% 300px at 95% -80px, var(--glow-b), transparent 70%),
+      var(--bg);
+    background-repeat: no-repeat;
+    color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; min-height: 100%;
+  }
   .page {
-    max-width: 540px; margin: 0 auto; padding-block: 18px 32px;
+    max-width: 540px; margin: 0 auto; padding-block: 18px 128px;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    display: flex; flex-direction: column; gap: 14px;
+    display: flex; flex-direction: column; gap: 16px;
   }
-  h1 { font-family: var(--font-display); font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
-  h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0; }
+  h1 { font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; margin: 0; }
+  h2 { font-family: var(--font-display); font-size: 1.02rem; font-weight: 600; margin: 0; }
   p { margin: 0; }
   .muted { color: var(--muted); }
   .small { font-size: 0.85rem; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  :focus-visible, .btn:focus-within { outline: 3px solid var(--tag); outline-offset: 2px; }
+  :focus-visible, .dock label:focus-within { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; }
 
-  /* ---- demander une cote ---- */
-  .ask { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .ask-photo { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    min-height: 52px; padding: 10px 16px; border-radius: 12px; border: 2px solid transparent;
-    font: 600 1rem var(--font-body); cursor: pointer; text-align: center;
-  }
-  .btn-main { background: var(--accent); color: var(--on-accent); min-height: 60px; font-size: 1.1rem; }
-  .btn-alt { background: var(--sunken); color: var(--ink); min-height: 60px; }
-  .btn-go { background: var(--ink); color: var(--bg); width: 100%; }
-  .btn[aria-disabled="true"], .btn:disabled { opacity: 0.5; pointer-events: none; }
-  .btn svg { width: 24px; height: 24px; flex-shrink: 0; }
-  .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
-  .or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(140deg, var(--accent), #7e69ff); display: grid; place-items: center; flex-shrink: 0; }
+  .logo svg { width: 24px; height: 24px; }
+  .chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+
+  /* ---- demander par noms ---- */
+  .ask { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
   .names {
-    width: 100%; min-height: 104px; resize: vertical; padding: 12px 14px; border-radius: 12px;
-    border: 2px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem/1.5 var(--font-body);
+    width: 100%; min-height: 96px; resize: vertical; padding: 12px 14px; border-radius: 16px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 400 1rem/1.5 var(--font-body);
   }
   .names::placeholder { color: var(--muted); }
   .names:focus { outline: none; border-color: var(--accent); }
+  .btn-go {
+    width: 100%; min-height: 50px; border-radius: 16px; border: 0; cursor: pointer;
+    background: var(--accent); color: var(--on-accent); font: 600 1rem var(--font-body);
+  }
+  .btn-go:disabled { opacity: 0.5; }
 
   .status { font-weight: 500; }
   .status:empty { display: none; }
@@ -76,104 +87,150 @@
   .spinner { width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; display: inline-block; vertical-align: -3px; margin-right: 8px; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ---- valeur totale ---- */
+  .total { padding: 18px 16px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+  .total strong { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; line-height: 1.15; }
+
   /* ---- résultats ---- */
-  .photos { display: flex; gap: 8px; overflow-x: auto; }
-  .photos img { height: 88px; width: auto; max-width: none; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
-  .total { background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
-  .total strong { font-family: var(--font-display); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-  .results { display: flex; flex-direction: column; gap: 10px; }
-  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .result > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .photos { display: flex; gap: 10px; overflow-x: auto; }
+  .photos img { height: 190px; width: auto; max-width: none; border-radius: 12px; border: 1px solid var(--line); flex-shrink: 0; }
+  .results { display: flex; flex-direction: column; gap: 12px; }
+  .result { overflow: hidden; }
+  .result > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
   .result > summary::-webkit-details-marker { display: none; }
   .sum-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .who h2 { font-size: 1.15rem; overflow-wrap: anywhere; }
-  .sum-price { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
-  .cote-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--price); font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
-  .sum-bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .rarity-line { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; min-width: 0; }
+  .who h2 { font-size: 1.1rem; overflow-wrap: anywhere; }
+  .sum-price { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .cote-value { background: var(--accent); color: var(--on-accent); border-radius: 10px; padding: 4px 10px; font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sum-bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .rarity-line { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; min-width: 0; }
   .pips { display: inline-flex; gap: 3px; flex-shrink: 0; }
-  .pips i { width: 14px; height: 7px; border-radius: 2px; background: var(--line); }
-  .pips i.on { background: var(--tag); }
-  .more { color: var(--accent); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .pips i { width: 14px; height: 7px; border-radius: 4px; background: var(--panel-strong); }
+  .pips i.on { background: var(--gold); }
+  .more { color: var(--muted); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
   .more::after { content: " ▾"; }
   .result[open] .more::after { content: " ▴"; }
   .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .badge { background: var(--tag); color: var(--on-tag); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+  .badge { background: var(--gold); color: var(--bg); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
   .badge.plain { background: transparent; color: var(--muted); border: 1px solid var(--line); }
-  .details { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
-  .block { border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .details { padding: 0 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: 600 0.92rem var(--font-body); min-height: 40px; border-radius: 10px; cursor: pointer; }
+  .seg button[aria-selected="true"] { background: var(--panel-strong); color: var(--ink); }
+  .tab { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.92rem; }
+  .row span:first-child { color: var(--muted); flex-shrink: 0; }
+  .row span:last-child { text-align: right; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
   .label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .grades { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-  .grades th { text-align: left; font-weight: 500; padding: 7px 8px 7px 0; }
-  .grades td { text-align: right; padding: 7px 0 7px 8px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .grades th { text-align: left; font-weight: 500; padding: 8px 8px 8px 0; }
+  .grades td { text-align: right; padding: 8px 0 8px 8px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
   .grades tr + tr th, .grades tr + tr td { border-top: 1px solid var(--line); }
-  .grades tr.current th, .grades tr.current td { color: var(--price); }
-  .grades tr.current th::after { content: " ← votre carte"; font-size: 0.78rem; font-weight: 600; }
+  .grades tr.current th, .grades tr.current td { color: var(--accent); }
+  .grades tr.current th::after { content: " · votre carte"; font-size: 0.78rem; font-weight: 600; }
   .links { display: flex; flex-wrap: wrap; gap: 8px; }
-  .links a { color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 0.88rem; text-decoration: none; }
-  .skeleton { height: 92px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(90deg, var(--surface) 25%, var(--sunken) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+  .links a { color: var(--ink); background: var(--panel-strong); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 0.86rem; text-decoration: none; }
+  .links a::after { content: " ↗"; color: var(--muted); }
+  .skeleton { height: 96px; border-radius: 22px; border: 1px solid var(--line); background: linear-gradient(90deg, var(--panel) 25%, var(--panel-strong) 50%, var(--panel) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
   @keyframes shimmer { to { background-position: -200% 0; } }
 
-  .history { display: flex; flex-direction: column; gap: 6px; }
-  .history ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .history li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+  .history { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 16px; }
+  .history ul { list-style: none; margin: 0; padding: 4px 14px; }
+  .history li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 0.92rem; }
+  .history li + li { border-top: 1px solid var(--line); }
   .history li span:first-child { min-width: 0; overflow-wrap: anywhere; }
   .history li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
-  .link-btn { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; align-self: flex-start; }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--accent); font: 600 0.85rem var(--font-body); cursor: pointer; }
+
+  /* ---- barre flottante ---- */
+  .dock {
+    position: fixed; z-index: 20; left: 0; right: 0; bottom: 0;
+    padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    display: flex; justify-content: center; align-items: center; gap: 12px; pointer-events: none;
+  }
+  .dock > * { pointer-events: auto; }
+  .dock-bar { background: var(--dock); border: 1px solid var(--line); border-radius: 22px; padding: 6px; display: flex; gap: 2px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+  .dock-bar button, .dock-bar label {
+    border: 0; background: transparent; color: var(--muted); cursor: pointer; border-radius: 16px;
+    min-width: 72px; min-height: 52px; padding: 6px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font: 600 0.68rem var(--font-body);
+  }
+  .dock-bar svg { width: 22px; height: 22px; }
+  .dock-bar button:active, .dock-bar label:active { background: var(--panel-strong); color: var(--ink); }
+  .scan {
+    width: 68px; height: 68px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+    background: linear-gradient(140deg, var(--accent), #7e69ff); color: #ffffff;
+    display: grid; place-items: center; box-shadow: 0 10px 28px rgba(47, 196, 178, 0.35);
+  }
+  .scan svg { width: 30px; height: 30px; }
+  .dock [aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { .spinner, .skeleton { animation: none; } }
 </style>
 
-<main class="page">
-  <header>
-    <h1>Cote Photo</h1>
-    <p class="muted">La cote de vos cartes à collectionner, par photo ou par nom.</p>
+<main class="page" id="top">
+  <header class="top">
+    <div class="top-id">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="11" height="15" rx="2" transform="rotate(-8 9.5 13.5)"/><path d="M12 4.5l6.4 1.2a2 2 0 0 1 1.6 2.3L18.3 18"/></svg>
+      </span>
+      <div>
+        <h1>Cote Photo</h1>
+        <p class="muted small">La cote de vos cartes, par photo ou par nom</p>
+      </div>
+    </div>
+    <span class="chip">Tous les jeux</span>
   </header>
 
-  <section class="ask" aria-label="Demander une cote">
-    <div class="ask-photo">
-      <label class="btn btn-main" id="shoot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
-        Photographier
-        <input class="visually-hidden" id="shoot-input" type="file" accept="image/*" capture="environment">
-      </label>
-      <label class="btn btn-alt" id="pick-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 3 3 3-3 5 5"/></svg>
-        Galerie
-        <input class="visually-hidden" id="pick-input" type="file" accept="image/*" multiple>
-      </label>
-    </div>
-    <p class="small muted" id="photo-hint">Plusieurs cartes sur une photo, c'est possible : à plat, côte à côte, sans chevauchement.</p>
-
-    <div class="or" aria-hidden="true">ou par nom</div>
-
-    <form id="names-form">
-      <label class="visually-hidden" for="names-input">Noms des cartes, une par ligne</label>
-      <textarea class="names" id="names-input" rows="3" autocomplete="off" autocapitalize="sentences" spellcheck="false"
-        placeholder="Une carte par ligne, par exemple :&#10;Dracaufeu Set de Base&#10;Black Lotus Alpha, jouée&#10;Luffy OP01-003"></textarea>
-      <p class="small muted" style="margin: 6px 0 10px">Précisez si vous voulez l'extension, le numéro ou l'état. Vous pouvez aussi coller une photo ici.</p>
-      <button class="btn btn-go" id="names-go" type="submit">Coter ces cartes</button>
-    </form>
-  </section>
+  <form class="panel ask" id="names-form">
+    <label class="visually-hidden" for="names-input">Noms des cartes, une par ligne</label>
+    <textarea class="names" id="names-input" rows="3" autocomplete="off" autocapitalize="sentences" spellcheck="false"
+      placeholder="Rechercher des cartes, une par ligne :&#10;Dracaufeu Set de Base&#10;Luffy OP01-003, jouée"></textarea>
+    <button class="btn-go" id="names-go" type="submit">Coter ces cartes</button>
+    <p class="small muted" id="photo-hint">Pour une photo, touchez le bouton rond en bas. Plusieurs cartes par photo, c'est possible. Vous pouvez aussi coller une photo ici.</p>
+  </form>
 
   <p class="status" id="status" role="status" aria-live="polite"></p>
 
+  <div class="panel total" id="total" hidden><strong id="total-value"></strong><span class="muted small" id="total-label"></span></div>
   <div class="photos" id="photos" hidden></div>
-  <div class="total" id="total" hidden><span id="total-label"></span><strong id="total-value"></strong></div>
-  <section class="results" id="results" aria-label="Résultats"></section>
+  <div class="section-head"><h2 id="results-title">Exemple de fiche</h2></div>
+  <section class="results" id="results" aria-labelledby="results-title"></section>
 
   <section class="history" id="history" hidden>
-    <h2>Dernières cartes</h2>
-    <ul id="history-list"></ul>
-    <button class="link-btn" id="history-clear" type="button">Effacer la liste</button>
+    <div class="section-head"><h2>Dernières cartes cotées</h2><button class="link-btn" id="history-clear" type="button">Effacer</button></div>
+    <ul class="panel" id="history-list"></ul>
   </section>
 
   <p class="small muted">
     Les cotes sont des estimations données par Claude d'après ses connaissances : ce ne sont pas des prix en direct et ils peuvent dater.
-    Sur photo, l'état est jugé à l'image seulement ; une carte se note vraiment en main, recto et verso.
-    Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés.
+    Sur photo, l'état est jugé à l'image seulement. Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés.
   </p>
 </main>
+
+<nav class="dock" aria-label="Actions">
+  <div class="dock-bar">
+    <button type="button" id="dock-names">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      Par nom
+    </button>
+    <label id="pick-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 3 3 3-3 5 5"/></svg>
+      Galerie
+      <input class="visually-hidden" id="pick-input" type="file" accept="image/*" multiple>
+    </label>
+    <button type="button" id="dock-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      Historique
+    </button>
+  </div>
+  <label class="scan" id="shoot-label" title="Photographier des cartes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><rect x="8.5" y="7.5" width="7" height="9" rx="1.5"/></svg>
+    <span class="visually-hidden">Photographier des cartes</span>
+    <input class="visually-hidden" id="shoot-input" type="file" accept="image/*" capture="environment">
+  </label>
+</nav>
 
 <script>
 (() => {
@@ -312,6 +369,8 @@ ${FORMAT}`;
     return links;
   }
 
+  let cardSeq = 0;
+
   // mode : "photo" (état jugé sur l'image) ou "noms" (état seulement s'il a été écrit).
   function renderCard(card, { mode = "photo", example = false, index = null, open = true } = {}) {
     const title = card.nom_anglais && card.nom_anglais.toLowerCase() !== card.nom.toLowerCase() ? `${card.nom} (${card.nom_anglais})` : card.nom;
@@ -319,22 +378,70 @@ ${FORMAT}`;
     const stateLabel = card.etat ? `état ${GRADE_NAMES[card.etat]}` : "si neuve";
     const rarityText = [card.rarete, card.version].filter(Boolean).join(" · ") || "Rareté non précisée";
 
+    const uid = `c${++cardSeq}`;
+    const tabs = [
+      ["details", "Détails"],
+      ["prix", "Prix"],
+    ];
+    const panels = {
+      details: el(
+        "div",
+        { class: "tab", id: `${uid}-details`, role: "tabpanel" },
+        el("div", { class: "row" }, el("span", {}, "Jeu"), el("span", {}, GAMES[card.jeu].name)),
+        card.extension ? el("div", { class: "row" }, el("span", {}, "Série"), el("span", {}, card.extension)) : null,
+        card.numero ? el("div", { class: "row" }, el("span", {}, "Numéro"), el("span", {}, card.numero)) : null,
+        card.langue ? el("div", { class: "row" }, el("span", {}, "Langue"), el("span", {}, card.langue)) : null,
+        el("div", { class: "row" }, el("span", {}, "Rareté"), el("span", {}, rarityText + (card.rareteNiveau ? ` · ${RARITY_SCALE[card.rareteNiveau].toLowerCase()} (${card.rareteNiveau}/5)` : ""))),
+        card.rareteExplication ? el("p", { class: "small" }, card.rareteExplication) : null,
+        card.etatRemarques && mode === "photo" ? el("p", { class: "small" }, el("strong", {}, "État vu sur la photo : "), card.etatRemarques) : null,
+        card.remarques ? el("p", { class: "small muted" }, card.remarques) : null
+      ),
+      prix: el(
+        "div",
+        { class: "tab", id: `${uid}-prix`, role: "tabpanel", hidden: true },
+        el("span", { class: "label" }, "Cote selon l'état"),
+        el(
+          "table",
+          { class: "grades" },
+          el(
+            "tbody",
+            {},
+            GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))),
+            card.psa10 ? el("tr", {}, el("th", { scope: "row" }, "Gradée PSA 10"), el("td", {}, range(card.psa10))) : null
+          )
+        ),
+        !card.etat && mode === "noms" ? el("p", { class: "small muted" }, "Ajoutez l'état après le nom (par exemple « jouée ») pour une cote plus précise.") : null,
+        example ? null : el("span", { class: "label" }, "Vérifier les ventes réelles"),
+        example ? null : el("div", { class: "links" }, marketLinks(card).map(([label, url]) => el("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, label)))
+      ),
+    };
+    const buttons = tabs.map(([key, label], i) => {
+      const b = el("button", { type: "button", role: "tab", "aria-selected": String(i === 0), "aria-controls": `${uid}-${key}` }, label);
+      b.addEventListener("click", () => {
+        tabs.forEach(([k], j) => {
+          panels[k].hidden = k !== key;
+          buttons[j].setAttribute("aria-selected", String(k === key));
+        });
+      });
+      return b;
+    });
+
     return el(
       "details",
-      { class: "result", open },
+      { class: "panel result", open },
       el(
         "summary",
         {},
         el(
           "div",
           { class: "badges" },
-          example ? el("span", { class: "badge" }, "Exemple d'affichage") : card.confiance !== "haute" ? el("span", { class: "badge" }, confidence) : null,
+          example ? el("span", { class: "badge" }, "Chiffres d'illustration") : card.confiance !== "haute" ? el("span", { class: "badge" }, confidence) : null,
           index !== null && card.position ? el("span", { class: "badge plain" }, mode === "photo" ? `Carte ${index + 1} · ${card.position}` : `« ${card.position} »`) : null
         ),
         el(
           "div",
           { class: "sum-top" },
-          el("div", { class: "who" }, el("h2", {}, title), el("p", { class: "muted small" }, [GAMES[card.jeu].name, card.extension, card.numero, card.langue].filter(Boolean).join(" · "))),
+          el("div", { class: "who" }, el("h2", {}, title), el("p", { class: "muted small" }, [card.extension, card.numero].filter(Boolean).join(" · ") || GAMES[card.jeu].name)),
           el("div", { class: "sum-price" }, el("span", { class: "cote-value" }, card.cote ? range(card.cote) : "—"), el("span", { class: "muted small" }, card.cote ? stateLabel : "cote inconnue"))
         ),
         el(
@@ -348,38 +455,10 @@ ${FORMAT}`;
               : null,
             el("span", {}, rarityText)
           ),
-          el("span", { class: "more" }, "Détails")
+          el("span", { class: "more" }, "Fiche")
         )
       ),
-      el(
-        "div",
-        { class: "details" },
-        el(
-          "div",
-          { class: "block" },
-          el("span", { class: "label" }, card.rareteNiveau ? `Rareté : ${RARITY_SCALE[card.rareteNiveau].toLowerCase()} (${card.rareteNiveau}/5)` : "Rareté"),
-          el("p", { class: "small" }, card.rareteExplication || rarityText)
-        ),
-        el(
-          "div",
-          { class: "block" },
-          el("span", { class: "label" }, "Cote selon l'état"),
-          el(
-            "table",
-            { class: "grades" },
-            el(
-              "tbody",
-              {},
-              GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))),
-              card.psa10 ? el("tr", {}, el("th", { scope: "row" }, "Gradée PSA 10"), el("td", {}, range(card.psa10))) : null
-            )
-          ),
-          card.etatRemarques && mode === "photo" ? el("p", { class: "small" }, el("strong", {}, "État vu sur la photo : "), card.etatRemarques) : null,
-          !card.etat && mode === "noms" ? el("p", { class: "small muted" }, "Ajoutez l'état après le nom (par exemple « jouée ») pour une cote plus précise.") : null,
-          card.remarques ? el("p", { class: "small muted" }, card.remarques) : null
-        ),
-        example ? null : el("div", { class: "links" }, marketLinks(card).map(([label, url]) => el("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, label)))
-      )
+      el("div", { class: "details" }, el("div", { class: "seg", role: "tablist" }, buttons), panels.details, panels.prix)
     );
   }
 
@@ -390,8 +469,8 @@ ${FORMAT}`;
     if (!show) return;
     const sum = [priced.reduce((s, c) => s + c.cote[0], 0), priced.reduce((s, c) => s + c.cote[1], 0)];
     const missing = cards.length - priced.length;
-    $("total-label").textContent = `${cards.length} cartes` + (missing ? ` (${missing} sans cote)` : "");
-    $("total-value").textContent = `Total : ${range(sum)}`;
+    $("total-label").textContent = `Valeur estimée de ${cards.length} cartes` + (missing ? ` (${missing} sans cote)` : "");
+    $("total-value").textContent = range(sum);
   }
 
   function setStatus(text, { busy = false, error = false } = {}) {
@@ -456,6 +535,7 @@ ${FORMAT}`;
     setStatus(waiting, { busy: true });
     showPhotos(images || []);
     $("total").hidden = true;
+    $("results-title").textContent = "Analyse en cours";
     $("results").replaceChildren(...Array.from({ length: Math.min(expected, 4) }, () => el("div", { class: "skeleton" })));
     try {
       const raw = await sample.json(prompt, images ? { images } : {});
@@ -464,12 +544,14 @@ ${FORMAT}`;
       const general = str(data.remarques_generales);
 
       if (!cards.length) {
-        $("results").replaceChildren(el("div", { class: "result" }, el("div", { class: "details", style: "padding-top:16px" }, el("h2", {}, "Aucune carte reconnue"), el("p", { class: "small" }, general || emptyHelp))));
+        $("results-title").textContent = "Aucune carte reconnue";
+        $("results").replaceChildren(el("div", { class: "panel", style: "padding:16px" }, el("p", { class: "small" }, general || emptyHelp)));
         setStatus("");
         return;
       }
       renderTotal(cards);
       const many = cards.length > 1;
+      $("results-title").textContent = many ? `${cards.length} cartes reconnues` : "Carte reconnue";
       $("results").replaceChildren(...cards.map((c, i) => renderCard(c, { mode, index: many ? i : null, open: cards.length <= 2 })));
       setStatus([general, extraNote].filter(Boolean).join(" "));
       saveHistory([...cards.map((c) => ({ nom: c.nom, extension: c.extension, cote: c.cote ? range(c.cote) : "—" })), ...loadHistory()]);
@@ -478,6 +560,7 @@ ${FORMAT}`;
     } catch (e) {
       const code = e && e.code;
       $("results").replaceChildren();
+      $("results-title").textContent = "";
       setStatus(code === "cancelled" ? "" : ERROR_COPY[code] || "La demande a échoué. Vérifiez votre connexion puis réessayez.", { error: true });
     } finally {
       busy = false;
@@ -542,6 +625,14 @@ ${FORMAT}`;
     e.preventDefault();
     analysePhotos(images);
   });
+  $("dock-names").addEventListener("click", () => {
+    $("top").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("names-input").focus({ preventScroll: true });
+  });
+  $("dock-history").addEventListener("click", () => {
+    if ($("history").hidden) setStatus("L'historique est vide : cotez une première carte.");
+    else $("history").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   $("history-clear").addEventListener("click", () => {
     saveHistory([]);
     renderHistory();
@@ -576,7 +667,7 @@ ${FORMAT}`;
       maxImages = Math.max(1, Number(limits.images.maxCount) || 1);
       if (maxImages === 1) $("pick-input").removeAttribute("multiple");
     } else {
-      $("photo-hint").textContent = "L'envoi de photos n'est pas disponible dans cette vue : écrivez les noms des cartes ci-dessous.";
+      $("photo-hint").textContent = "L'envoi de photos n'est pas disponible dans cette vue : écrivez les noms des cartes ci-dessus.";
     }
     refreshControls();
   })();
