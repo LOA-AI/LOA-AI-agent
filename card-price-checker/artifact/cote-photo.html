@@ -261,16 +261,17 @@
     ["jouee", "Jouée"],
     ["abimee", "Abîmée"],
   ];
+  const PSA_GRADES = ["8", "9", "10"];
   const GRADE_NAMES = { neuve: "neuve", excellente: "excellente", jouee: "jouée", abimee: "abîmée" };
   const RARITY_SCALE = ["", "Courante", "Peu courante", "Rare", "Très rare", "Exceptionnelle"];
 
   const EXPERT = `Tu es un expert en cartes à collectionner (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, Disney Lorcana, One Piece, Dragon Ball Super, Digimon, Flesh and Blood, Star Wars: Unlimited, cartes de sport, autres).`;
 
   const PER_CARD = `Rareté : donne la rareté imprimée (symbole ou mention), un niveau de 1 (courante) à 5 (exceptionnelle) qui tient compte de la version et du tirage, et une explication de deux phrases maximum : comment reconnaître cette rareté sur la carte, à quelle fréquence on la trouve, et ce qui distinguerait une version plus rare de la même carte.
-Cote : estime une fourchette de prix de marché actuelle en euros, non gradée, pour CHACUN des quatre états (neuve = near mint, excellente, jouee, abimee), d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Les prix doivent décroître avec l'état. Si la carte gagne nettement à être gradée, ajoute la fourchette pour une PSA 10, sinon mets null.`;
+Cote : estime une fourchette de prix de marché actuelle en euros, non gradée, pour CHACUN des quatre états (neuve = near mint, excellente, jouee, abimee), d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Les prix doivent décroître avec l'état. Donne aussi la fourchette pour un exemplaire gradé PSA 8, PSA 9 et PSA 10 ; les prix doivent croître avec la note. Si cette carte n'est presque jamais gradée ou si tu n'as aucun repère de prix, mets null pour la note concernée plutôt que d'inventer.`;
 
   const FORMAT = `Réponds uniquement avec un objet JSON, sans autre texte, de cette forme :
-{"cartes": [{"position": "", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa10_eur": [min, max], "confiance": "haute|moyenne|faible", "remarques": ""}], "remarques_generales": ""}
+{"cartes": [{"position": "", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa_eur": {"8": [min, max], "9": [min, max], "10": [min, max]}, "confiance": "haute|moyenne|faible", "remarques": ""}], "remarques_generales": ""}
 Tous les textes sont en français.`;
 
   const PHOTO_PROMPT = `${EXPERT}
@@ -333,6 +334,7 @@ ${FORMAT}`;
 
   function normalize(raw) {
     const prix = raw.prix_eur && typeof raw.prix_eur === "object" ? raw.prix_eur : {};
+    const psaRaw = raw.prix_psa_eur && typeof raw.prix_psa_eur === "object" ? raw.prix_psa_eur : {};
     const card = {
       position: str(raw.position),
       nom: str(raw.nom),
@@ -348,7 +350,7 @@ ${FORMAT}`;
       etat: GRADE_NAMES[str(raw.etat_estime)] ? str(raw.etat_estime) : null,
       etatRemarques: str(raw.etat_remarques),
       prix: Object.fromEntries(GRADES.map(([key]) => [key, pair(prix[key])])),
-      psa10: pair(raw.prix_psa10_eur),
+      psa: PSA_GRADES.map((g) => [g, pair(psaRaw[g])]),
       confiance: str(raw.confiance),
       remarques: str(raw.remarques),
     };
@@ -399,17 +401,16 @@ ${FORMAT}`;
       prix: el(
         "div",
         { class: "tab", id: `${uid}-prix`, role: "tabpanel", hidden: true },
-        el("span", { class: "label" }, "Cote selon l'état"),
+        el("span", { class: "label" }, "Non gradée, selon l'état"),
         el(
           "table",
           { class: "grades" },
-          el(
-            "tbody",
-            {},
-            GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))),
-            card.psa10 ? el("tr", {}, el("th", { scope: "row" }, "Gradée PSA 10"), el("td", {}, range(card.psa10))) : null
-          )
+          el("tbody", {}, GRADES.map(([key, label]) => el("tr", { class: key === card.etat ? "current" : null }, el("th", { scope: "row" }, label), el("td", {}, range(card.prix[key])))))
         ),
+        el("span", { class: "label" }, "Gradée PSA"),
+        card.psa.some(([, p]) => p)
+          ? el("table", { class: "grades" }, el("tbody", {}, card.psa.map(([g, p]) => el("tr", {}, el("th", { scope: "row" }, `PSA ${g}`), el("td", {}, range(p))))))
+          : el("p", { class: "small muted" }, "Pas de repère de prix : cette carte est rarement gradée."),
         !card.etat && mode === "noms" ? el("p", { class: "small muted" }, "Ajoutez l'état après le nom (par exemple « jouée ») pour une cote plus précise.") : null,
         example ? null : el("span", { class: "label" }, "Vérifier les ventes réelles"),
         example ? null : el("div", { class: "links" }, marketLinks(card).map(([label, url]) => el("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, label)))
@@ -646,7 +647,7 @@ ${FORMAT}`;
         version: "Holo, édition illimitée", rarete: "Rare holographique", rarete_niveau: 4,
         rarete_explication: "L'étoile noire en bas à droite indique une carte rare ; l'illustration brillante en fait une holo, environ une par trois boosters à l'époque. Un tampon « Édition 1 » à gauche de l'illustration la rendrait bien plus rare.",
         etat_estime: "excellente", etat_remarques: "Léger blanchiment des bords, fines rayures sur la partie holo. (Chiffres d'illustration, pas une cote réelle.)",
-        prix_eur: { neuve: [350, 600], excellente: [200, 350], jouee: [110, 200], abimee: [50, 110] }, prix_psa10_eur: [3000, 6000], confiance: "haute",
+        prix_eur: { neuve: [350, 600], excellente: [200, 350], jouee: [110, 200], abimee: [50, 110] }, prix_psa_eur: { 8: [700, 1000], 9: [1400, 2200], 10: [3000, 6000] }, confiance: "haute",
       }),
       { example: true, open: false }
     )
