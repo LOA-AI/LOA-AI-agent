@@ -12,3 +12,7 @@ Application de cuisine web (HTML/CSS/JS, sans dépendance). Ouvrir `cuisine/inde
 - Minuteur de cuisson
 
 Les données sont enregistrées localement dans le navigateur.
+
+### Sur iPhone
+
+`cuisine/ma-cuisine-iphone.html` est la version publiée en page Claude (https://claude.ai/artifact/WwVf3bePvbPMmPFKy3aK8V) : données sauvegardées dans le compte, ajoutable à l’écran d’accueil depuis Safari.

@@ -1,0 +1,462 @@
+<title>Ma Cuisine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma Cuisine">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout : en-tête collant + une vue à la fois, cartes en grille, pensé pour le pouce sur iPhone */
+:root {
+  --bg: #f7f5f0; --carte: #ffffff; --texte: #1f2a24; --doux: #66736b;
+  --accent: #2f6f4f; --accent-texte: #ffffff; --accent-2: #e3ece6; --bord: #dde3dc; --alerte: #b3412e;
+  --f-titre: "Fraunces", Georgia, serif; --f-texte: "Inter", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121815; --carte: #1b2420; --texte: #e8eee9; --doux: #9aa9a0;
+  --accent: #6fbf94; --accent-texte: #0f1a14; --accent-2: #24342c; --bord: #2c3a33; --alerte: #ef8a72; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121815; --carte: #1b2420; --texte: #e8eee9; --doux: #9aa9a0;
+  --accent: #6fbf94; --accent-texte: #0f1a14; --accent-2: #24342c; --bord: #2c3a33; --alerte: #ef8a72; color-scheme: dark }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--texte); font-family: var(--f-texte); font-size: 16px; -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--bord);
+  padding-block: 12px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.entete { max-width: 960px; margin: 0 auto; display: grid; gap: 10px; }
+h1 { margin: 0; font-family: var(--f-titre); font-size: 1.6rem; letter-spacing: -.01em; }
+h2, h3 { font-family: var(--f-titre); text-wrap: balance; }
+nav { display: flex; gap: 6px; }
+nav button { flex: 1; background: var(--accent-2); color: var(--texte); }
+nav button.active { background: var(--accent); color: var(--accent-texte); }
+main { max-width: 960px; margin: 0 auto; padding-block: 16px 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.view { display: none; } .view.active { display: block; }
+button { font: inherit; font-weight: 600; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-texte); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .carte:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button.secondaire { background: var(--accent-2); color: var(--texte); }
+button.danger { background: var(--alerte); color: #fff; }
+input, select, textarea { font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--bord); border-radius: 10px; background: var(--carte); color: var(--texte); width: 100%; }
+label { display: block; margin-bottom: 14px; font-weight: 600; }
+label input, label select, label textarea { margin-top: 6px; font-weight: 400; }
+label.chk { display: flex; align-items: center; gap: 8px; margin: 0; white-space: nowrap; }
+label.chk input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+small { color: var(--doux); font-weight: 400; }
+.ligne { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.ligne > label { flex: 1 1 120px; }
+.ligne > input { flex: 1; min-width: 0; }
+.filtres { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.filtres input { flex: 2 1 220px; } .filtres select { flex: 1 1 150px; width: auto; }
+.note { background: var(--accent-2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: .9rem; color: var(--texte); }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 14px 16px; cursor: pointer; min-width: 0; }
+.carte h3 { margin: 0 0 8px; font-size: 1.15rem; overflow-wrap: anywhere; }
+.meta { color: var(--doux); font-size: .9rem; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-variant-numeric: tabular-nums; }
+.badge { background: var(--accent-2); color: var(--texte); padding: 2px 10px; border-radius: 99px; font-size: .78rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.etoile { color: var(--accent); }
+.vide { color: var(--doux); text-align: center; padding: 40px 0; }
+.detail-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.detail-entete h2 { margin: 0 0 6px; font-size: 1.7rem; overflow-wrap: anywhere; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+.confirmer { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--accent-2); padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; }
+.portions { display: inline-flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.portions button { width: 44px; padding: 0; font-size: 1.2rem; }
+.colonnes { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+.colonnes > div { min-width: 0; }
+@media (max-width: 640px) { .colonnes { grid-template-columns: 1fr; gap: 8px; } }
+.colonnes ul, .colonnes ol { padding-left: 22px; }
+.colonnes li { margin-bottom: 10px; line-height: 1.45; }
+ol li { cursor: pointer; }
+ol li.fait { text-decoration: line-through; color: var(--doux); }
+#courses { list-style: none; padding: 0; margin: 16px 0; }
+#courses li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--bord); min-height: 48px; }
+#courses li input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+#courses li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+#courses li.coche span { text-decoration: line-through; color: var(--doux); }
+#courses li button { background: transparent; color: var(--doux); padding: 0 10px; }
+#etat-synchro { font-size: .8rem; color: var(--doux); }
+#minuteur { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); background: var(--texte); color: var(--bg); padding: 6px 8px 6px 18px; border-radius: 99px; display: flex; gap: 6px; align-items: center; font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; z-index: 6; }
+#minuteur.fini { background: var(--accent); color: var(--accent-texte); animation: pulse 1s infinite; }
+#minuteur button { background: transparent; color: inherit; padding: 0 12px; }
+@keyframes pulse { 50% { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { #minuteur.fini { animation: none; } }
+</style>
+
+<header>
+  <div class="entete">
+    <div class="ligne" style="justify-content:space-between;align-items:baseline">
+      <h1>Ma Cuisine</h1><span id="etat-synchro"></span>
+    </div>
+    <nav>
+      <button id="nav-recettes" data-view="recettes" class="active">Recettes</button>
+      <button id="nav-courses" data-view="courses">Courses <span id="nb-courses"></span></button>
+      <button id="nav-ajout" data-view="ajout">+ Ajouter</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="view-recettes" class="view active">
+    <p id="note-demo" class="note" hidden>Ce sont des recettes d'exemple. Ajoutez les vôtres, ou modifiez et supprimez celles-ci.</p>
+    <div class="filtres">
+      <input id="recherche" type="search" placeholder="Rechercher une recette ou un ingrédient…" aria-label="Rechercher">
+      <select id="filtre-cat" aria-label="Catégorie">
+        <option value="">Toutes catégories</option>
+        <option>Entrée</option><option>Plat</option><option>Dessert</option><option>Boisson</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="filtre-fav"> Favoris</label>
+    </div>
+    <div id="liste" class="grille"></div>
+  </section>
+
+  <section id="view-detail" class="view"></section>
+
+  <section id="view-courses" class="view">
+    <h2>Liste de courses</h2>
+    <form id="form-course" class="ligne">
+      <input id="course-input" placeholder="Ajouter un article…" required aria-label="Article">
+      <button>Ajouter</button>
+    </form>
+    <ul id="courses"></ul>
+    <button id="vider-coches" class="secondaire">Retirer les articles cochés</button>
+  </section>
+
+  <section id="view-ajout" class="view">
+    <h2 id="titre-form">Nouvelle recette</h2>
+    <form id="form-recette">
+      <input type="hidden" id="f-rid" name="rid">
+      <label>Nom <input id="f-nom" name="nom" required></label>
+      <div class="ligne">
+        <label>Catégorie
+          <select id="f-cat" name="categorie"><option>Entrée</option><option selected>Plat</option><option>Dessert</option><option>Boisson</option></select>
+        </label>
+        <label>Personnes <input id="f-pers" name="personnes" type="number" inputmode="numeric" min="1" value="4" required></label>
+        <label>Temps (min) <input id="f-temps" name="temps" type="number" inputmode="numeric" min="1" value="30" required></label>
+      </div>
+      <label>Ingrédients <small>(un par ligne, quantité en premier : « 200 g farine »)</small>
+        <textarea id="f-ingr" name="ingredients" rows="6" required></textarea></label>
+      <label>Étapes <small>(une par ligne)</small>
+        <textarea id="f-etapes" name="etapes" rows="6" required></textarea></label>
+      <div class="ligne">
+        <button type="submit">Enregistrer</button>
+        <button type="button" id="annuler" class="secondaire">Annuler</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<div id="minuteur" hidden>
+  <span id="minuteur-temps">00:00</span>
+  <button id="minuteur-stop" aria-label="Arrêter le minuteur">✕</button>
+</div>
+
+<script>
+'use strict';
+
+// ---------- Données ----------
+const RECETTES_DEMO = [
+  { id: 'r1', nom: 'Crêpes', categorie: 'Dessert', personnes: 4, temps: 30, favori: true,
+    ingredients: ['250 g farine', '4 œufs', '50 cl lait', '50 g beurre fondu', '1 pincée sel', '2 c. à soupe sucre'],
+    etapes: ['Mélanger la farine, le sucre et le sel.', 'Ajouter les œufs puis le lait petit à petit en fouettant.',
+      'Incorporer le beurre fondu et laisser reposer 1 heure.', 'Cuire dans une poêle chaude légèrement beurrée.'] },
+  { id: 'r2', nom: 'Ratatouille', categorie: 'Plat', personnes: 4, temps: 75, favori: false,
+    ingredients: ['2 aubergines', '3 courgettes', '2 poivrons', '4 tomates', '2 oignons', '3 gousses ail', "4 c. à soupe huile d'olive", '1 branche thym'],
+    etapes: ['Couper tous les légumes en dés.', "Faire revenir les oignons et l'ail dans l'huile.",
+      'Ajouter poivrons et aubergines, cuire 10 minutes.', 'Ajouter courgettes, tomates et thym.',
+      'Laisser mijoter à couvert 45 minutes à feu doux.'] },
+  { id: 'r3', nom: 'Velouté de potiron', categorie: 'Entrée', personnes: 4, temps: 40, favori: false,
+    ingredients: ['800 g potiron', '1 pomme de terre', '1 oignon', '1 l bouillon de légumes', '10 cl crème', 'sel et poivre'],
+    etapes: ['Éplucher et couper les légumes.', "Faire suer l'oignon, ajouter potiron et pomme de terre.",
+      'Couvrir de bouillon et cuire 25 minutes.', 'Mixer, ajouter la crème, assaisonner.'] },
+  { id: 'r4', nom: 'Citronnade maison', categorie: 'Boisson', personnes: 6, temps: 10, favori: false,
+    ingredients: ['4 citrons', '100 g sucre', '1,5 l eau fraîche', '6 feuilles menthe'],
+    etapes: ['Presser les citrons.', "Dissoudre le sucre dans un peu d'eau.", "Mélanger le tout avec l'eau et la menthe, servir frais."] },
+];
+
+// Copie locale (affichage immédiat) + sauvegarde privée dans le compte quand elle est disponible
+const lireLocal = (cle) => { try { const v = localStorage.getItem(cle); return v ? JSON.parse(v) : null; } catch { return null; } };
+const ecrireLocal = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* indisponible */ } };
+
+let recettes = lireLocal('cuisine.recettes');
+let estDemo = !recettes;
+if (!recettes) recettes = JSON.parse(JSON.stringify(RECETTES_DEMO));
+let courses = lireLocal('cuisine.courses') || [];
+
+let distant = null; // { recettes: DocRef, courses: DocRef }
+const dernierEnvoi = { recettes: null, courses: null };
+
+function envoyer(nom, liste) {
+  ecrireLocal('cuisine.' + nom, liste);
+  if (!distant) return;
+  const json = JSON.stringify(liste);
+  dernierEnvoi[nom] = json;
+  majSynchro('Enregistrement…');
+  distant[nom].set({ liste: JSON.parse(json), maj: Date.now() })
+    .then(() => majSynchro('Enregistré'))
+    .catch(() => majSynchro('Hors ligne : enregistré sur cet appareil'));
+}
+function enregistrerRecettes() { estDemo = false; $('#note-demo').hidden = true; envoyer('recettes', recettes); }
+function enregistrerCourses() { envoyer('courses', courses); majCompteurCourses(); }
+function majSynchro(t) { $('#etat-synchro').textContent = t; }
+
+// ---------- Utilitaires ----------
+const $ = (s) => document.querySelector(s);
+const echapper = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sansAccent = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function ajusterIngredient(ligne, facteur) {
+  if (facteur === 1) return ligne;
+  const m = ligne.match(/^(\d+(?:[.,]\d+)?)(?:\/(\d+))?(.*)$/);
+  if (!m) return ligne;
+  let q = parseFloat(m[1].replace(',', '.'));
+  if (m[2]) q /= parseInt(m[2], 10);
+  const n = Math.round(q * facteur * 100) / 100;
+  return n.toString().replace('.', ',') + m[3];
+}
+function formatTemps(min) {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), r = min % 60;
+  return r ? `${h} h ${r}` : `${h} h`;
+}
+
+// ---------- Navigation ----------
+let vueCourante = 'recettes';
+function afficherVue(nom) {
+  vueCourante = nom;
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === 'view-' + nom));
+  document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === nom));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => {
+  const v = b.dataset.view;
+  if (v === 'ajout') ouvrirFormulaire();
+  else if (v === 'courses') { rendreCourses(); afficherVue('courses'); }
+  else { rendreListe(); afficherVue('recettes'); }
+}));
+
+// ---------- Liste ----------
+function rendreListe() {
+  $('#note-demo').hidden = !estDemo;
+  const q = sansAccent($('#recherche').value.trim());
+  const cat = $('#filtre-cat').value;
+  const fav = $('#filtre-fav').checked;
+  const res = recettes.filter((r) =>
+    (!cat || r.categorie === cat) && (!fav || r.favori) &&
+    (!q || sansAccent(r.nom + ' ' + r.ingredients.join(' ')).includes(q))
+  ).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  $('#liste').innerHTML = res.length ? res.map((r) => `
+    <article class="carte" tabindex="0" data-id="${r.id}">
+      <h3>${r.favori ? '<span class="etoile" aria-label="Favori">★</span> ' : ''}${echapper(r.nom)}</h3>
+      <div class="meta"><span class="badge">${echapper(r.categorie)}</span>
+        <span>${formatTemps(r.temps)}</span><span>${r.personnes} pers.</span></div>
+    </article>`).join('') : '<p class="vide">Aucune recette trouvée.</p>';
+}
+$('#liste').addEventListener('click', (e) => { const c = e.target.closest('.carte'); if (c) afficherDetail(c.dataset.id); });
+$('#liste').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const c = e.target.closest('.carte'); if (c) afficherDetail(c.dataset.id); } });
+['#recherche', '#filtre-cat', '#filtre-fav'].forEach((s) => $(s).addEventListener('input', rendreListe));
+
+// ---------- Détail ----------
+let detail = { id: null, personnes: 0, confirmer: false };
+
+function afficherDetail(id, personnes, garderScroll) {
+  const r = recettes.find((x) => x.id === id);
+  if (!r) { rendreListe(); afficherVue('recettes'); return; }
+  const faites = detail.id === id ? [...document.querySelectorAll('#view-detail ol li')].map((li) => li.classList.contains('fait')) : [];
+  detail = { id, personnes: personnes || r.personnes, confirmer: detail.id === id && detail.confirmer };
+  const f = detail.personnes / r.personnes;
+  $('#view-detail').innerHTML = `
+    <div class="detail-entete">
+      <div><h2>${echapper(r.nom)}</h2>
+        <div class="meta"><span class="badge">${echapper(r.categorie)}</span><span>${formatTemps(r.temps)}</span></div></div>
+      <button class="secondaire" data-act="retour">Retour</button>
+    </div>
+    <div class="actions">
+      <button data-act="fav" class="secondaire">${r.favori ? '★ Favori' : '☆ Favori'}</button>
+      <button data-act="courses">Ajouter aux courses</button>
+      <button data-act="minuteur" class="secondaire">Minuteur ${formatTemps(r.temps)}</button>
+      <button class="secondaire" data-act="modifier">Modifier</button>
+      <button class="secondaire" data-act="supprimer">Supprimer</button>
+    </div>
+    ${detail.confirmer ? `<div class="confirmer"><span>Supprimer « ${echapper(r.nom)} » ?</span>
+      <button class="danger" data-act="oui-supprimer">Supprimer</button><button class="secondaire" data-act="non-supprimer">Annuler</button></div>` : ''}
+    <div class="colonnes">
+      <div>
+        <h3>Ingrédients</h3>
+        <div class="portions"><button class="secondaire" data-act="moins" aria-label="Moins de personnes">−</button><strong>${detail.personnes} pers.</strong><button class="secondaire" data-act="plus" aria-label="Plus de personnes">+</button></div>
+        <ul>${r.ingredients.map((i) => `<li>${echapper(ajusterIngredient(i, f))}</li>`).join('')}</ul>
+      </div>
+      <div>
+        <h3>Préparation <small>(touchez une étape pour la cocher)</small></h3>
+        <ol>${r.etapes.map((e, i) => `<li class="${faites[i] ? 'fait' : ''}">${echapper(e)}</li>`).join('')}</ol>
+      </div>
+    </div>`;
+  if (vueCourante !== 'detail' || !garderScroll) afficherVue('detail');
+}
+
+$('#view-detail').addEventListener('click', (e) => {
+  const li = e.target.closest('ol li');
+  if (li) { li.classList.toggle('fait'); return; }
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const r = recettes.find((x) => x.id === detail.id);
+  if (!r) return;
+  const f = detail.personnes / r.personnes;
+  switch (btn.dataset.act) {
+    case 'retour': rendreListe(); afficherVue('recettes'); break;
+    case 'plus': afficherDetail(r.id, detail.personnes + 1, true); break;
+    case 'moins': if (detail.personnes > 1) afficherDetail(r.id, detail.personnes - 1, true); break;
+    case 'fav': r.favori = !r.favori; enregistrerRecettes(); afficherDetail(r.id, detail.personnes, true); break;
+    case 'courses': {
+      const existants = new Set(courses.map((c) => c.texte));
+      r.ingredients.map((i) => ajusterIngredient(i, f)).forEach((t) => { if (!existants.has(t)) courses.push({ texte: t, coche: false }); });
+      enregistrerCourses();
+      btn.textContent = '✓ Ajouté aux courses';
+      break;
+    }
+    case 'minuteur': demarrerMinuteur(r.temps * 60); break;
+    case 'modifier': ouvrirFormulaire(r); break;
+    case 'supprimer': detail.confirmer = true; afficherDetail(r.id, detail.personnes, true); break;
+    case 'non-supprimer': detail.confirmer = false; afficherDetail(r.id, detail.personnes, true); break;
+    case 'oui-supprimer':
+      detail = { id: null, personnes: 0, confirmer: false };
+      recettes = recettes.filter((x) => x.id !== r.id);
+      enregistrerRecettes(); rendreListe(); afficherVue('recettes');
+      break;
+  }
+});
+
+// ---------- Formulaire ----------
+const form = $('#form-recette');
+function ouvrirFormulaire(r) {
+  form.reset();
+  $('#titre-form').textContent = r ? 'Modifier la recette' : 'Nouvelle recette';
+  $('#f-rid').value = r?.id || '';
+  if (r) {
+    $('#f-nom').value = r.nom; $('#f-cat').value = r.categorie;
+    $('#f-pers').value = r.personnes; $('#f-temps').value = r.temps;
+    $('#f-ingr').value = r.ingredients.join('\n'); $('#f-etapes').value = r.etapes.join('\n');
+  }
+  afficherVue('ajout');
+}
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const lignes = (t) => t.split('\n').map((s) => s.trim()).filter(Boolean);
+  const donnees = {
+    nom: $('#f-nom').value.trim(), categorie: $('#f-cat').value,
+    personnes: Math.max(1, parseInt($('#f-pers').value, 10) || 1), temps: Math.max(1, parseInt($('#f-temps').value, 10) || 1),
+    ingredients: lignes($('#f-ingr').value), etapes: lignes($('#f-etapes').value),
+  };
+  let id = $('#f-rid').value;
+  const existante = id && recettes.find((x) => x.id === id);
+  if (existante) Object.assign(existante, donnees);
+  else { id = 'r' + Date.now(); recettes.push({ id, favori: false, ...donnees }); }
+  enregistrerRecettes();
+  detail.id = null;
+  afficherDetail(id);
+});
+$('#annuler').addEventListener('click', () => {
+  const id = $('#f-rid').value;
+  if (id) afficherDetail(id); else { rendreListe(); afficherVue('recettes'); }
+});
+
+// ---------- Courses ----------
+function majCompteurCourses() {
+  const n = courses.filter((c) => !c.coche).length;
+  $('#nb-courses').textContent = n ? `(${n})` : '';
+}
+function rendreCourses() {
+  $('#courses').innerHTML = courses.length ? courses.map((c, i) => `
+    <li class="${c.coche ? 'coche' : ''}" data-i="${i}">
+      <input type="checkbox" ${c.coche ? 'checked' : ''} aria-label="Cocher"><span>${echapper(c.texte)}</span>
+      <button aria-label="Supprimer l'article">✕</button></li>`).join('')
+    : '<li class="vide">Votre liste est vide. Ajoutez un article ci-dessus, ou depuis une recette.</li>';
+}
+$('#courses').addEventListener('click', (e) => {
+  const li = e.target.closest('li[data-i]');
+  if (!li) return;
+  const i = +li.dataset.i;
+  if (e.target.closest('button')) courses.splice(i, 1);
+  else courses[i].coche = !courses[i].coche;
+  enregistrerCourses(); rendreCourses();
+});
+$('#form-course').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const t = $('#course-input').value.trim();
+  if (!t) return;
+  courses.push({ texte: t, coche: false });
+  $('#course-input').value = '';
+  enregistrerCourses(); rendreCourses();
+});
+$('#vider-coches').addEventListener('click', () => { courses = courses.filter((c) => !c.coche); enregistrerCourses(); rendreCourses(); });
+
+// ---------- Minuteur ----------
+let minuteurId = null, verrou = null;
+function demarrerMinuteur(secondes) {
+  clearInterval(minuteurId);
+  const fin = Date.now() + secondes * 1000;
+  const el = $('#minuteur');
+  el.hidden = false; el.classList.remove('fini');
+  try { navigator.wakeLock?.request('screen').then((l) => { verrou = l; }).catch(() => {}); } catch { /* non supporté */ }
+  const tic = () => {
+    const reste = Math.max(0, Math.round((fin - Date.now()) / 1000));
+    const m = String(Math.floor(reste / 60)).padStart(2, '0'), s = String(reste % 60).padStart(2, '0');
+    $('#minuteur-temps').textContent = `${m}:${s}`;
+    if (reste === 0) {
+      clearInterval(minuteurId);
+      el.classList.add('fini');
+      $('#minuteur-temps').textContent = "C'est prêt !";
+      try { navigator.vibrate?.([300, 100, 300]); } catch { /* non supporté */ }
+    }
+  };
+  tic(); minuteurId = setInterval(tic, 1000);
+}
+$('#minuteur-stop').addEventListener('click', () => {
+  clearInterval(minuteurId); $('#minuteur').hidden = true;
+  try { verrou?.release(); } catch { /* rien */ } verrou = null;
+});
+
+// ---------- Synchronisation avec le compte ----------
+async function connecter() {
+  if (!window.claude?.use) return;
+  const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+  if (!db || !user) return;
+  const uid = await user.id();
+  if (!uid) return;
+  const col = db.collection('data/users/' + uid);
+  distant = { recettes: col.doc('recettes'), courses: col.doc('courses') };
+  majSynchro('Synchronisation…');
+
+  const suivre = (nom, appliquer) => {
+    let premier = true;
+    distant[nom].onSnapshot((snap) => {
+      const d = snap.exists ? snap.data() : null;
+      if (!d || !Array.isArray(d.liste)) {
+        // Rien dans le compte : on y enregistre ce que cet appareil a déjà (sauf les exemples)
+        if (premier && !(nom === 'recettes' && estDemo)) envoyer(nom, nom === 'recettes' ? recettes : courses);
+        premier = false; majSynchro('Enregistré dans votre compte');
+        return;
+      }
+      premier = false;
+      const json = JSON.stringify(d.liste);
+      if (json === dernierEnvoi[nom]) return;
+      dernierEnvoi[nom] = json;
+      ecrireLocal('cuisine.' + nom, d.liste);
+      appliquer(d.liste);
+      majSynchro('Enregistré dans votre compte');
+    }, () => majSynchro('Hors ligne : enregistré sur cet appareil'));
+  };
+
+  suivre('recettes', (liste) => {
+    recettes = liste; estDemo = false;
+    if (vueCourante === 'recettes') rendreListe();
+    else if (vueCourante === 'detail') afficherDetail(detail.id, detail.personnes, true);
+  });
+  suivre('courses', (liste) => {
+    courses = liste; majCompteurCourses();
+    if (vueCourante === 'courses') rendreCourses();
+  });
+}
+
+// ---------- Démarrage ----------
+majCompteurCourses();
+rendreListe();
+connecter().catch(() => majSynchro('Enregistré sur cet appareil'));
+</script>
