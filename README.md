@@ -15,4 +15,4 @@ Les données sont enregistrées localement dans le navigateur.
 
 ### Sur iPhone
 
-`cuisine/ma-cuisine-iphone.html` est la version publiée en page Claude (https://claude.ai/artifact/WwVf3bePvbPMmPFKy3aK8V) : données sauvegardées dans le compte, ajoutable à l’écran d’accueil depuis Safari. Onglet « Idées » : saisir quelques ingrédients, Claude propose des recettes avec chaque étape détaillée et sa durée.
+`cuisine/ma-cuisine-iphone.html` est la version publiée en page Claude (https://claude.ai/artifact/WwVf3bePvbPMmPFKy3aK8V) : données sauvegardées dans le compte, ajoutable à l’écran d’accueil depuis Safari. Onglet « Idées » : photographier son frigo (Claude fait l’inventaire et repère ce qui est à finir vite) ou saisir quelques ingrédients, Claude propose des recettes avec chaque étape détaillée et sa durée.

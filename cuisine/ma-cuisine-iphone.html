@@ -82,6 +82,15 @@ ol li.fait { text-decoration: line-through; color: var(--doux); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
 .chip { display: inline-flex; align-items: center; gap: 2px; background: var(--accent); color: var(--accent-texte); border-radius: 99px; padding: 2px 2px 2px 14px; font-weight: 600; max-width: 100%; }
 .chip button { min-height: 36px; padding: 0 10px; background: transparent; color: inherit; }
+.chip.urgent { background: var(--alerte); color: #fff; }
+.photo-zone { display: grid; gap: 8px; margin-bottom: 14px; }
+.bouton-photo { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; margin: 0; border-radius: 12px; background: var(--accent); color: var(--accent-texte); font-weight: 600; font-size: 1.05rem; cursor: pointer; }
+.bouton-photo svg { width: 24px; height: 24px; flex: none; }
+.bouton-photo.occupe { opacity: .6; pointer-events: none; }
+.cache-visuel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.apercu { display: flex; gap: 8px; flex-wrap: wrap; }
+.apercu img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--bord); }
+.legende { font-size: .85rem; color: var(--doux); }
 .suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 16px; }
 .suggestions button { min-height: 36px; padding: 4px 12px; font-weight: 500; background: var(--carte); color: var(--texte); border: 1px dashed var(--bord); }
 .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; align-items: end; }
@@ -152,7 +161,16 @@ ol li.fait { text-decoration: line-through; color: var(--doux); }
 
   <section id="view-idees" class="view">
     <h2>Que cuisiner ?</h2>
-    <p class="intro">Ajoutez les ingrédients que vous avez. Claude vous propose des recettes avec chaque étape détaillée et sa durée.</p>
+    <p class="intro">Photographiez votre frigo ou ajoutez vos ingrédients. Claude vous propose des recettes avec chaque étape détaillée et sa durée.</p>
+    <div id="photo-zone" class="photo-zone" hidden>
+      <label id="bouton-photo" class="bouton-photo" for="photo-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+        Photographier mon frigo
+      </label>
+      <input id="photo-input" class="cache-visuel" type="file" accept="image/*" multiple>
+      <span class="legende">Vous pouvez choisir jusqu'à 3 photos (frigo, placard…). Les ingrédients en rouge sont à consommer rapidement.</span>
+      <div id="apercu" class="apercu"></div>
+    </div>
     <form id="form-ingr" class="ligne">
       <input id="ingr-input" placeholder="Ex. : poulet, riz, poivron" autocomplete="off" aria-label="Ingrédient">
       <button>Ajouter</button>
@@ -492,18 +510,20 @@ $('#minuteur-stop').addEventListener('click', () => {
 // ---------- Idées : recettes à partir des ingrédients ----------
 const SUGGESTIONS = ['Œufs', 'Pâtes', 'Riz', 'Oignon', 'Tomates', 'Poulet', 'Fromage', 'Pommes de terre', 'Courgette', 'Crème', 'Lardons', 'Thon'];
 let ingrIdees = lireLocal('cuisine.ingrIdees') || [];
+let urgents = new Set(lireLocal('cuisine.urgents') || []);
 let propositions = [];
 let ctlIdees = null;
 const promesseSample = window.claude?.use ? claude.use('sample').catch(() => null) : Promise.resolve(null);
 
 function rendreChips() {
   $('#chips').innerHTML = ingrIdees.map((x, i) =>
-    `<span class="chip">${echapper(x)}<button type="button" data-i="${i}" aria-label="Retirer ${echapper(x)}">✕</button></span>`).join('');
+    `<span class="chip${urgents.has(sansAccent(x)) ? ' urgent' : ''}">${echapper(x)}<button type="button" data-i="${i}" aria-label="Retirer ${echapper(x)}">✕</button></span>`).join('');
   const deja = new Set(ingrIdees.map(sansAccent));
   $('#suggestions').innerHTML = SUGGESTIONS.filter((s) => !deja.has(sansAccent(s)))
     .map((s) => `<button type="button" data-s="${echapper(s)}">+ ${echapper(s)}</button>`).join('');
   $('#btn-idees').disabled = !ingrIdees.length || !!ctlIdees;
   ecrireLocal('cuisine.ingrIdees', ingrIdees);
+  ecrireLocal('cuisine.urgents', [...urgents]);
 }
 function ajouterIngr(texte) {
   const deja = new Set(ingrIdees.map(sansAccent));
@@ -612,8 +632,10 @@ $('#propositions').addEventListener('click', (e) => {
 function construirePrompt() {
   const pers = Math.max(1, parseInt($('#i-pers').value, 10) || 2);
   const tmax = $('#i-temps').value, cat = $('#i-cat').value, strict = $('#i-strict').checked;
+  const prioritaires = ingrIdees.filter((x) => urgents.has(sansAccent(x)));
   return `Tu es un chef cuisinier. Propose 3 recettes différentes et réalistes en français, pour ${pers} personne(s), en utilisant surtout ces ingrédients disponibles : ${ingrIdees.join(', ')}.
-Contraintes :
+Contraintes :${prioritaires.length ? `\n- Utilise en priorité ces ingrédients à consommer rapidement : ${prioritaires.join(', ')}. Chaque recette doit en utiliser au moins un.` : ''}
+- Les 3 recettes doivent être variées et, ensemble, utiliser le plus possible des ingrédients disponibles.
 - ${tmax ? `Temps total (préparation + cuisson + repos) de ${tmax} minutes maximum.` : 'Pas de limite de temps.'}
 - ${cat ? `Type de recette : ${cat}.` : 'Type libre (entrée, plat ou dessert).'}
 - ${strict ? "N'utilise que les ingrédients disponibles, plus sel, poivre, huile, beurre, eau et farine. Aucun autre ingrédient." : "Tu peux ajouter quelques ingrédients courants manquants ; marque-les avec \"a_acheter\": true."}
@@ -625,7 +647,7 @@ Réponds uniquement avec ce JSON :
 "type" vaut "preparation", "cuisson" ou "repos". "categorie" vaut "Entrée", "Plat" ou "Dessert".`;
 }
 
-$('#btn-idees').addEventListener('click', async () => {
+async function proposer() {
   if (!ingrIdees.length || ctlIdees) return;
   const sample = await promesseSample;
   if (!sample) {
@@ -656,9 +678,82 @@ $('#btn-idees').addEventListener('click', async () => {
   } finally {
     ctlIdees = null; $('#btn-stop').hidden = true; rendreChips();
   }
-});
+}
+$('#btn-idees').addEventListener('click', proposer);
 $('#btn-stop').addEventListener('click', () => ctlIdees?.abort());
 rendreChips();
+
+// ---------- Photo du frigo ----------
+let maxPhotos = 3;
+promesseSample.then((s) => s?.limits?.()).then((l) => {
+  if (!l?.images) return;
+  maxPhotos = Math.max(1, Math.min(3, l.images.maxCount || 3));
+  $('#photo-zone').hidden = false;
+}).catch(() => {});
+
+// Réduit la photo (les photos d'iPhone sont lourdes) et la convertit en JPEG
+async function preparerPhoto(fichier) {
+  try {
+    const url = URL.createObjectURL(fichier);
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const echelle = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * echelle); c.height = Math.round(img.naturalHeight * echelle);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    const blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.85));
+    return blob || fichier;
+  } catch { return fichier; }
+}
+
+$('#photo-input').addEventListener('change', async (e) => {
+  const fichiers = [...e.target.files].slice(0, maxPhotos);
+  e.target.value = '';
+  if (!fichiers.length || ctlIdees) return;
+  const sample = await promesseSample;
+  if (!sample) return;
+  const photos = await Promise.all(fichiers.map(preparerPhoto));
+  $('#apercu').innerHTML = '';
+  photos.forEach((p) => { const i = document.createElement('img'); i.alt = 'Photo envoyée'; i.src = URL.createObjectURL(p); $('#apercu').append(i); });
+
+  ctlIdees = new AbortController();
+  $('#bouton-photo').classList.add('occupe'); $('#btn-idees').disabled = true; $('#btn-stop').hidden = false;
+  propositions = []; rendrePropositions();
+  statutIdees('Claude regarde votre photo et fait l\'inventaire…');
+  let trouves = [];
+  try {
+    const data = await sample.json(`Ces photos montrent l'intérieur d'un réfrigérateur ou d'un placard de cuisine. Fais l'inventaire des aliments utilisables pour cuisiner.
+- Nomme chaque aliment simplement, en français, au singulier ou au pluriel naturel (ex. : "Œufs", "Lait", "Carottes", "Jambon", "Yaourts nature").
+- Ignore les boissons, condiments et sauces en bouteille, sauf s'ils sont utiles en cuisine (crème, beurre, moutarde).
+- Ne liste que ce que tu vois vraiment. Si tu hésites sur un aliment, ne le mets pas.
+- "urgent": true pour les produits frais à consommer rapidement (légumes abîmés ou entamés, viande, poisson, restes, produits ouverts).
+Réponds uniquement avec ce JSON : {"ingredients":[{"nom":"Œufs","urgent":false}]}`,
+      { images: photos, signal: ctlIdees.signal });
+    trouves = (Array.isArray(data?.ingredients) ? data.ingredients : [])
+      .map((i) => ({ nom: texte(i?.nom), urgent: !!i?.urgent })).filter((i) => i.nom);
+  } catch (err) {
+    const messages = {
+      cancelled: '',
+      not_granted: "Vous n'avez pas autorisé Ma Cuisine à envoyer des photos à Claude. Vous pourrez l'autoriser au prochain chargement de la page.",
+      rate_limited: 'Trop de demandes en peu de temps. Patientez une minute avant de réessayer.',
+      image_rejected: "Cette photo n'a pas pu être lue. Essayez une autre photo, au format JPEG ou PNG.",
+      images_unavailable: "L'envoi de photos n'est pas disponible ici. Ajoutez vos ingrédients à la main.",
+    };
+    const m = err?.code in messages ? messages[err.code] : "L'analyse de la photo a échoué. Vérifiez votre connexion et réessayez.";
+    statutIdees(m, !!m);
+  } finally {
+    ctlIdees = null; $('#bouton-photo').classList.remove('occupe'); $('#btn-stop').hidden = true;
+  }
+  if (!trouves.length) {
+    if ($('#statut-idees').hidden) statutIdees("Aucun ingrédient reconnu sur la photo. Essayez une photo plus nette et bien éclairée, ou ajoutez-les à la main.", true);
+    rendreChips();
+    return;
+  }
+  trouves.forEach((i) => { if (i.urgent) urgents.add(sansAccent(i.nom)); });
+  ajouterIngr(trouves.map((i) => i.nom).join(','));
+  statutIdees(`${trouves.length} ingrédient${trouves.length > 1 ? 's' : ''} trouvé${trouves.length > 1 ? 's' : ''}. Retirez ceux qui sont faux d'un toucher sur ✕.`);
+  await proposer();
+});
 
 // ---------- Synchronisation avec le compte ----------
 async function connecter() {
