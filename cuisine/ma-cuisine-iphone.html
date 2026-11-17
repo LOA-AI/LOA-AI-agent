@@ -77,6 +77,46 @@ ol li.fait { text-decoration: line-through; color: var(--doux); }
 #minuteur.fini { background: var(--accent); color: var(--accent-texte); animation: pulse 1s infinite; }
 #minuteur button { background: transparent; color: inherit; padding: 0 12px; }
 @keyframes pulse { 50% { opacity: .65; } }
+/* Idées de recettes */
+.intro { color: var(--doux); margin: -4px 0 14px; line-height: 1.45; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.chip { display: inline-flex; align-items: center; gap: 2px; background: var(--accent); color: var(--accent-texte); border-radius: 99px; padding: 2px 2px 2px 14px; font-weight: 600; max-width: 100%; }
+.chip button { min-height: 36px; padding: 0 10px; background: transparent; color: inherit; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 16px; }
+.suggestions button { min-height: 36px; padding: 4px 12px; font-weight: 500; background: var(--carte); color: var(--texte); border: 1px dashed var(--bord); }
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; align-items: end; }
+.options label { margin: 0; }
+.statut { margin: 16px 0; color: var(--doux); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.statut.erreur { color: var(--alerte); }
+.propositions { display: grid; gap: 12px; margin-top: 16px; }
+.proposition { background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; min-width: 0; }
+.proposition > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; gap: 6px; }
+.proposition > summary::-webkit-details-marker { display: none; }
+.proposition > summary h3 { margin: 0; font-size: 1.25rem; overflow-wrap: anywhere; }
+.proposition > summary h3::after { content: " ▾"; color: var(--doux); font-size: .9rem; }
+.proposition[open] > summary h3::after { content: " ▴"; }
+.corps { padding: 0 16px 16px; display: grid; gap: 14px; }
+.corps p { margin: 0; line-height: 1.5; }
+.corps h4 { margin: 0; font-family: var(--f-titre); font-size: 1.05rem; }
+.durees { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+@media (max-width: 420px) { .durees { grid-template-columns: repeat(2, 1fr); } }
+.duree-bloc { background: var(--accent-2); border-radius: 10px; padding: 8px 10px; font-variant-numeric: tabular-nums; }
+.duree-bloc span { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--doux); font-weight: 600; }
+.duree-bloc strong { font-size: 1.05rem; }
+.duree-bloc.total { background: var(--accent); color: var(--accent-texte); }
+.duree-bloc.total span { color: inherit; opacity: .85; }
+.ingr { margin: 0; padding-left: 20px; } .ingr li { margin-bottom: 6px; }
+.acheter { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--alerte); margin-left: 6px; }
+.etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: etape; }
+.etapes li { border-left: 3px solid var(--bord); padding: 2px 0 2px 12px; counter-increment: etape; }
+.etapes li.cuisson { border-color: var(--alerte); } .etapes li.repos { border-color: var(--doux); } .etapes li.preparation { border-color: var(--accent); }
+.etape-tete { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 4px; }
+.etape-tete strong::before { content: counter(etape) ". "; }
+.tag { font-size: .8rem; color: var(--doux); font-variant-numeric: tabular-nums; }
+.mini { min-height: 34px; padding: 2px 10px; font-size: .85rem; background: var(--accent-2); color: var(--texte); }
+.astuce { background: var(--accent-2); border-radius: 10px; padding: 10px 12px; }
+.duree { color: var(--doux); font-size: .85rem; white-space: nowrap; }
+.conseil { background: var(--accent-2); border-radius: 10px; padding: 10px 14px; margin-top: 8px; line-height: 1.45; }
 @media (prefers-reduced-motion: reduce) { #minuteur.fini { animation: none; } }
 </style>
 
@@ -87,6 +127,7 @@ ol li.fait { text-decoration: line-through; color: var(--doux); }
     </div>
     <nav>
       <button id="nav-recettes" data-view="recettes" class="active">Recettes</button>
+      <button id="nav-idees" data-view="idees">Idées</button>
       <button id="nav-courses" data-view="courses">Courses <span id="nb-courses"></span></button>
       <button id="nav-ajout" data-view="ajout">+ Ajouter</button>
     </nav>
@@ -108,6 +149,33 @@ ol li.fait { text-decoration: line-through; color: var(--doux); }
   </section>
 
   <section id="view-detail" class="view"></section>
+
+  <section id="view-idees" class="view">
+    <h2>Que cuisiner ?</h2>
+    <p class="intro">Ajoutez les ingrédients que vous avez. Claude vous propose des recettes avec chaque étape détaillée et sa durée.</p>
+    <form id="form-ingr" class="ligne">
+      <input id="ingr-input" placeholder="Ex. : poulet, riz, poivron" autocomplete="off" aria-label="Ingrédient">
+      <button>Ajouter</button>
+    </form>
+    <div id="chips" class="chips"></div>
+    <div class="suggestions" id="suggestions"></div>
+    <div class="options">
+      <label>Personnes <input id="i-pers" type="number" inputmode="numeric" min="1" value="2"></label>
+      <label>Temps maximum
+        <select id="i-temps"><option value="">Peu importe</option><option value="20">20 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option></select>
+      </label>
+      <label>Type
+        <select id="i-cat"><option value="">Peu importe</option><option>Entrée</option><option>Plat</option><option>Dessert</option></select>
+      </label>
+      <label class="chk"><input type="checkbox" id="i-strict"> Rien d'autre à acheter</label>
+    </div>
+    <div class="ligne" style="margin-top:14px">
+      <button id="btn-idees" disabled>Proposer des recettes</button>
+      <button id="btn-stop" class="secondaire" hidden>Arrêter</button>
+    </div>
+    <div id="statut-idees" class="statut" hidden></div>
+    <div id="propositions" class="propositions"></div>
+  </section>
 
   <section id="view-courses" class="view">
     <h2>Liste de courses</h2>
@@ -229,6 +297,7 @@ document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click
   const v = b.dataset.view;
   if (v === 'ajout') ouvrirFormulaire();
   else if (v === 'courses') { rendreCourses(); afficherVue('courses'); }
+  else if (v === 'idees') afficherVue('idees');
   else { rendreListe(); afficherVue('recettes'); }
 }));
 
@@ -265,7 +334,8 @@ function afficherDetail(id, personnes, garderScroll) {
   $('#view-detail').innerHTML = `
     <div class="detail-entete">
       <div><h2>${echapper(r.nom)}</h2>
-        <div class="meta"><span class="badge">${echapper(r.categorie)}</span><span>${formatTemps(r.temps)}</span></div></div>
+        <div class="meta"><span class="badge">${echapper(r.categorie)}</span><span>${formatTemps(r.temps)}</span>
+          ${r.tempsPrep ? `<span>Prépa ${formatTemps(r.tempsPrep)}</span>` : ''}${r.tempsCuisson ? `<span>Cuisson ${formatTemps(r.tempsCuisson)}</span>` : ''}${r.tempsRepos ? `<span>Repos ${formatTemps(r.tempsRepos)}</span>` : ''}</div></div>
       <button class="secondaire" data-act="retour">Retour</button>
     </div>
     <div class="actions">
@@ -285,13 +355,16 @@ function afficherDetail(id, personnes, garderScroll) {
       </div>
       <div>
         <h3>Préparation <small>(touchez une étape pour la cocher)</small></h3>
-        <ol>${r.etapes.map((e, i) => `<li class="${faites[i] ? 'fait' : ''}">${echapper(e)}</li>`).join('')}</ol>
+        <ol>${r.etapes.map((e, i) => `<li class="${faites[i] ? 'fait' : ''}">${echapper(e)}${r.durees?.[i] ? ` <span class="duree">${formatTemps(r.durees[i])}</span> <button class="mini" data-min="${r.durees[i]}">Minuteur</button>` : ''}</li>`).join('')}</ol>
+        ${r.conseil ? `<p class="conseil"><strong>Astuce :</strong> ${echapper(r.conseil)}</p>` : ''}
       </div>
     </div>`;
   if (vueCourante !== 'detail' || !garderScroll) afficherVue('detail');
 }
 
 $('#view-detail').addEventListener('click', (e) => {
+  const bMin = e.target.closest('[data-min]');
+  if (bMin) { demarrerMinuteur(+bMin.dataset.min * 60); return; }
   const li = e.target.closest('ol li');
   if (li) { li.classList.toggle('fait'); return; }
   const btn = e.target.closest('[data-act]');
@@ -346,7 +419,10 @@ form.addEventListener('submit', (e) => {
   };
   let id = $('#f-rid').value;
   const existante = id && recettes.find((x) => x.id === id);
-  if (existante) Object.assign(existante, donnees);
+  if (existante) {
+    if (existante.durees && existante.durees.length !== donnees.etapes.length) delete existante.durees;
+    Object.assign(existante, donnees);
+  }
   else { id = 'r' + Date.now(); recettes.push({ id, favori: false, ...donnees }); }
   enregistrerRecettes();
   detail.id = null;
@@ -412,6 +488,177 @@ $('#minuteur-stop').addEventListener('click', () => {
   clearInterval(minuteurId); $('#minuteur').hidden = true;
   try { verrou?.release(); } catch { /* rien */ } verrou = null;
 });
+
+// ---------- Idées : recettes à partir des ingrédients ----------
+const SUGGESTIONS = ['Œufs', 'Pâtes', 'Riz', 'Oignon', 'Tomates', 'Poulet', 'Fromage', 'Pommes de terre', 'Courgette', 'Crème', 'Lardons', 'Thon'];
+let ingrIdees = lireLocal('cuisine.ingrIdees') || [];
+let propositions = [];
+let ctlIdees = null;
+const promesseSample = window.claude?.use ? claude.use('sample').catch(() => null) : Promise.resolve(null);
+
+function rendreChips() {
+  $('#chips').innerHTML = ingrIdees.map((x, i) =>
+    `<span class="chip">${echapper(x)}<button type="button" data-i="${i}" aria-label="Retirer ${echapper(x)}">✕</button></span>`).join('');
+  const deja = new Set(ingrIdees.map(sansAccent));
+  $('#suggestions').innerHTML = SUGGESTIONS.filter((s) => !deja.has(sansAccent(s)))
+    .map((s) => `<button type="button" data-s="${echapper(s)}">+ ${echapper(s)}</button>`).join('');
+  $('#btn-idees').disabled = !ingrIdees.length || !!ctlIdees;
+  ecrireLocal('cuisine.ingrIdees', ingrIdees);
+}
+function ajouterIngr(texte) {
+  const deja = new Set(ingrIdees.map(sansAccent));
+  texte.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean).forEach((s) => {
+    if (!deja.has(sansAccent(s))) { ingrIdees.push(s); deja.add(sansAccent(s)); }
+  });
+  rendreChips();
+}
+$('#form-ingr').addEventListener('submit', (e) => { e.preventDefault(); ajouterIngr($('#ingr-input').value); $('#ingr-input').value = ''; });
+$('#chips').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) { ingrIdees.splice(+b.dataset.i, 1); rendreChips(); } });
+$('#suggestions').addEventListener('click', (e) => { const b = e.target.closest('button[data-s]'); if (b) ajouterIngr(b.dataset.s); });
+
+function statutIdees(html, erreur) {
+  const el = $('#statut-idees');
+  el.hidden = !html; el.innerHTML = html || ''; el.classList.toggle('erreur', !!erreur);
+}
+
+const nombre = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? n : 0; };
+const texte = (v) => (typeof v === 'string' ? v.trim() : '');
+function normaliser(data) {
+  const liste = Array.isArray(data) ? data : Array.isArray(data?.recettes) ? data.recettes : [];
+  return liste.map((r) => {
+    const etapes = (Array.isArray(r.etapes) ? r.etapes : []).map((e) => ({
+      titre: texte(e.titre) || 'Étape', detail: texte(e.detail), duree: nombre(e.duree_min),
+      type: ['preparation', 'cuisson', 'repos'].includes(e.type) ? e.type : 'preparation',
+    })).filter((e) => e.detail);
+    const somme = (t) => etapes.filter((e) => e.type === t).reduce((a, e) => a + e.duree, 0);
+    const prep = nombre(r.temps_preparation) || somme('preparation');
+    const cuisson = nombre(r.temps_cuisson) || somme('cuisson');
+    const repos = nombre(r.temps_repos) || somme('repos');
+    return {
+      nom: texte(r.nom) || 'Recette', description: texte(r.description),
+      categorie: ['Entrée', 'Plat', 'Dessert', 'Boisson'].includes(r.categorie) ? r.categorie : 'Plat',
+      personnes: nombre(r.personnes) || 2, difficulte: texte(r.difficulte),
+      prep, cuisson, repos, total: nombre(r.temps_total) || prep + cuisson + repos || etapes.reduce((a, e) => a + e.duree, 0),
+      ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).map((i) => ({
+        quantite: texte(i.quantite), nom: texte(i.nom), aAcheter: !!i.a_acheter,
+      })).filter((i) => i.nom),
+      etapes, astuce: texte(r.astuce),
+    };
+  }).filter((r) => r.etapes.length && r.ingredients.length);
+}
+
+function blocDuree(label, min, total) {
+  return `<div class="duree-bloc${total ? ' total' : ''}"><span>${label}</span><strong>${min ? formatTemps(min) : '—'}</strong></div>`;
+}
+function rendrePropositions() {
+  $('#propositions').innerHTML = propositions.map((p, k) => `
+    <details class="proposition" ${k === 0 ? 'open' : ''}>
+      <summary>
+        <h3>${echapper(p.nom)}</h3>
+        <div class="meta"><span class="badge">${echapper(p.categorie)}</span><span>${formatTemps(p.total)} au total</span>
+          <span>${p.personnes} pers.</span>${p.difficulte ? `<span>${echapper(p.difficulte)}</span>` : ''}</div>
+      </summary>
+      <div class="corps">
+        ${p.description ? `<p>${echapper(p.description)}</p>` : ''}
+        <div class="durees">${blocDuree('Préparation', p.prep)}${blocDuree('Cuisson', p.cuisson)}${blocDuree('Repos', p.repos)}${blocDuree('Total', p.total, true)}</div>
+        <h4>Ingrédients</h4>
+        <ul class="ingr">${p.ingredients.map((i) => `<li>${echapper([i.quantite, i.nom].filter(Boolean).join(' '))}${i.aAcheter ? '<span class="acheter">à acheter</span>' : ''}</li>`).join('')}</ul>
+        <h4>Préparation détaillée</h4>
+        <ol class="etapes">${p.etapes.map((e) => `
+          <li class="${e.type}">
+            <div class="etape-tete"><strong>${echapper(e.titre)}</strong>
+              <span class="tag">${e.duree ? formatTemps(e.duree) : ''}${e.duree ? ' · ' : ''}${{ preparation: 'préparation', cuisson: 'cuisson', repos: 'repos' }[e.type]}</span>
+              ${e.duree ? `<button class="mini" data-min="${e.duree}">Minuteur</button>` : ''}</div>
+            <p>${echapper(e.detail)}</p>
+          </li>`).join('')}</ol>
+        ${p.astuce ? `<p class="astuce"><strong>Astuce :</strong> ${echapper(p.astuce)}</p>` : ''}
+        <div class="ligne">
+          <button data-sauver="${k}">Enregistrer dans mes recettes</button>
+          ${p.ingredients.some((i) => i.aAcheter) ? `<button class="secondaire" data-acheter="${k}">Ajouter les manquants aux courses</button>` : ''}
+        </div>
+      </div>
+    </details>`).join('');
+}
+
+$('#propositions').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.min) { demarrerMinuteur(+b.dataset.min * 60); return; }
+  if (b.dataset.acheter) {
+    const p = propositions[+b.dataset.acheter];
+    const existants = new Set(courses.map((c) => c.texte));
+    p.ingredients.filter((i) => i.aAcheter).map((i) => [i.quantite, i.nom].filter(Boolean).join(' '))
+      .forEach((t) => { if (!existants.has(t)) courses.push({ texte: t, coche: false }); });
+    enregistrerCourses();
+    b.textContent = '✓ Ajouté aux courses';
+    return;
+  }
+  if (b.dataset.sauver) {
+    const p = propositions[+b.dataset.sauver];
+    const id = 'r' + Date.now();
+    recettes.push({
+      id, favori: false, nom: p.nom, categorie: p.categorie, personnes: p.personnes, temps: Math.max(1, p.total),
+      tempsPrep: p.prep, tempsCuisson: p.cuisson, tempsRepos: p.repos,
+      ingredients: p.ingredients.map((i) => [i.quantite, i.nom].filter(Boolean).join(' ')),
+      etapes: p.etapes.map((s) => `${s.titre} : ${s.detail}`),
+      durees: p.etapes.map((s) => s.duree), conseil: p.astuce,
+    });
+    enregistrerRecettes();
+    detail.id = null;
+    afficherDetail(id);
+  }
+});
+
+function construirePrompt() {
+  const pers = Math.max(1, parseInt($('#i-pers').value, 10) || 2);
+  const tmax = $('#i-temps').value, cat = $('#i-cat').value, strict = $('#i-strict').checked;
+  return `Tu es un chef cuisinier. Propose 3 recettes différentes et réalistes en français, pour ${pers} personne(s), en utilisant surtout ces ingrédients disponibles : ${ingrIdees.join(', ')}.
+Contraintes :
+- ${tmax ? `Temps total (préparation + cuisson + repos) de ${tmax} minutes maximum.` : 'Pas de limite de temps.'}
+- ${cat ? `Type de recette : ${cat}.` : 'Type libre (entrée, plat ou dessert).'}
+- ${strict ? "N'utilise que les ingrédients disponibles, plus sel, poivre, huile, beurre, eau et farine. Aucun autre ingrédient." : "Tu peux ajouter quelques ingrédients courants manquants ; marque-les avec \"a_acheter\": true."}
+- Sel, poivre, huile et eau ne sont jamais à acheter.
+- Détaille chaque étape comme pour un débutant : gestes, taille de découpe, feu (doux, moyen, vif), température du four, signes de cuisson. Une étape = une action, avec sa durée réaliste en minutes.
+- Les quantités sont données en premier, avec unité (g, cl, c. à soupe, pièce…), pour ${pers} personne(s).
+Réponds uniquement avec ce JSON :
+{"recettes":[{"nom":"Omelette aux champignons","categorie":"Plat","description":"Une phrase qui donne envie.","personnes":${pers},"difficulte":"Facile","temps_preparation":10,"temps_cuisson":8,"temps_repos":0,"temps_total":18,"ingredients":[{"quantite":"4","nom":"œufs","a_acheter":false}],"etapes":[{"titre":"Préparer les champignons","detail":"Essuyer les champignons et les couper en lamelles de 3 mm.","duree_min":5,"type":"preparation"}],"astuce":"Un conseil de chef."}]}
+"type" vaut "preparation", "cuisson" ou "repos". "categorie" vaut "Entrée", "Plat" ou "Dessert".`;
+}
+
+$('#btn-idees').addEventListener('click', async () => {
+  if (!ingrIdees.length || ctlIdees) return;
+  const sample = await promesseSample;
+  if (!sample) {
+    statutIdees("Les idées de recettes ne sont pas disponibles ici. Ouvrez Ma Cuisine depuis claude.ai ou l'app Claude, connecté à votre compte.", true);
+    return;
+  }
+  ctlIdees = new AbortController();
+  $('#btn-idees').disabled = true; $('#btn-stop').hidden = false;
+  propositions = []; rendrePropositions();
+  statutIdees('Claude réfléchit à vos recettes… (cela peut prendre jusqu\'à une minute)');
+  let ecrit = false;
+  try {
+    const data = await sample.json(construirePrompt(), {
+      signal: ctlIdees.signal,
+      onText: () => { if (!ecrit) { ecrit = true; statutIdees('Rédaction des recettes détaillées…'); } },
+    });
+    propositions = normaliser(data);
+    if (propositions.length) { statutIdees(''); rendrePropositions(); }
+    else statutIdees('Aucune recette exploitable reçue. Réessayez, ou ajoutez un ou deux ingrédients.', true);
+  } catch (e) {
+    const messages = {
+      cancelled: '',
+      not_granted: "Vous n'avez pas autorisé Ma Cuisine à utiliser Claude. Vous pourrez l'autoriser au prochain chargement de la page.",
+      rate_limited: 'Trop de demandes en peu de temps. Patientez une minute avant de réessayer.',
+    };
+    const m = e?.code in messages ? messages[e.code] : 'La demande a échoué. Vérifiez votre connexion et réessayez.';
+    statutIdees(m, !!m);
+  } finally {
+    ctlIdees = null; $('#btn-stop').hidden = true; rendreChips();
+  }
+});
+$('#btn-stop').addEventListener('click', () => ctlIdees?.abort());
+rendreChips();
 
 // ---------- Synchronisation avec le compte ----------
 async function connecter() {
