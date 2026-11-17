@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma Cuisine</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🍳 Ma Cuisine</h1>
+  <nav>
+    <button data-view="recettes" class="active">Recettes</button>
+    <button data-view="courses">Courses <span id="nb-courses"></span></button>
+    <button data-view="ajout">+ Ajouter</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Liste des recettes -->
+  <section id="view-recettes" class="view active">
+    <div class="filtres">
+      <input id="recherche" type="search" placeholder="Rechercher une recette ou un ingrédient…">
+      <select id="filtre-cat">
+        <option value="">Toutes catégories</option>
+        <option>Entrée</option><option>Plat</option><option>Dessert</option><option>Boisson</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="filtre-fav"> Favoris</label>
+    </div>
+    <div id="liste" class="grille"></div>
+  </section>
+
+  <!-- Détail -->
+  <section id="view-detail" class="view"></section>
+
+  <!-- Liste de courses -->
+  <section id="view-courses" class="view">
+    <h2>Liste de courses</h2>
+    <form id="form-course" class="ligne">
+      <input id="course-input" placeholder="Ajouter un article…" required>
+      <button>Ajouter</button>
+    </form>
+    <ul id="courses"></ul>
+    <button id="vider-coches" class="secondaire">Retirer les articles cochés</button>
+  </section>
+
+  <!-- Ajout / édition -->
+  <section id="view-ajout" class="view">
+    <h2 id="titre-form">Nouvelle recette</h2>
+    <form id="form-recette">
+      <input type="hidden" name="rid">
+      <label>Nom <input name="nom" required></label>
+      <div class="ligne">
+        <label>Catégorie
+          <select name="categorie"><option>Entrée</option><option selected>Plat</option><option>Dessert</option><option>Boisson</option></select>
+        </label>
+        <label>Personnes <input name="personnes" type="number" min="1" value="4" required></label>
+        <label>Temps (min) <input name="temps" type="number" min="1" value="30" required></label>
+      </div>
+      <label>Ingrédients <small>(un par ligne : « 200 g farine »)</small>
+        <textarea name="ingredients" rows="6" required></textarea></label>
+      <label>Étapes <small>(une par ligne)</small>
+        <textarea name="etapes" rows="6" required></textarea></label>
+      <div class="ligne">
+        <button type="submit">Enregistrer</button>
+        <button type="button" id="annuler" class="secondaire">Annuler</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<div id="minuteur" hidden>
+  <span id="minuteur-temps">00:00</span>
+  <button id="minuteur-stop" aria-label="Arrêter">✕</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
