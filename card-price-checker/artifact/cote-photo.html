@@ -205,7 +205,7 @@
 
   <p class="small muted">
     Les cotes sont des estimations données par Claude d'après ses connaissances : ce ne sont pas des prix en direct et ils peuvent dater.
-    Sur photo, l'état est jugé à l'image seulement. Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés.
+    Les éditeurs publient rarement leurs tirages : sans numéro de série imprimé sur la carte, un tirage est au mieux une estimation. Sur photo, l'état est jugé à l'image seulement. Avant d'acheter ou de vendre, vérifiez les ventes réelles avec les liens proposés.
   </p>
 </main>
 
@@ -268,10 +268,11 @@
   const EXPERT = `Tu es un expert en cartes à collectionner (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, Disney Lorcana, One Piece, Dragon Ball Super, Digimon, Flesh and Blood, Star Wars: Unlimited, cartes de sport, autres).`;
 
   const PER_CARD = `Rareté : donne la rareté imprimée (symbole ou mention), un niveau de 1 (courante) à 5 (exceptionnelle) qui tient compte de la version et du tirage, et une explication de deux phrases maximum : comment reconnaître cette rareté sur la carte, à quelle fréquence on la trouve, et ce qui distinguerait une version plus rare de la même carte.
+Tirage : donne la quantité de cartes émises. "exact" seulement si le chiffre est imprimé sur la carte (carte numérotée de type 12/99 comme numéro de série) ou annoncé officiellement. "estime" si tu connais un ordre de grandeur crédible (tirage limité d'une édition, promo à tirage connu) et dans ce cas écris-le avec "environ". Sinon "inconnu" avec une valeur vide : les éditeurs publient rarement leurs tirages. N'invente jamais un chiffre. Attention : le numéro de collection (ex. 4/102) n'est PAS le tirage, c'est la place de la carte dans la série.
 Cote : estime une fourchette de prix de marché actuelle en euros, non gradée, pour CHACUN des quatre états (neuve = near mint, excellente, jouee, abimee), d'après tes connaissances des prix Cardmarket, TCGplayer et eBay. Les prix doivent décroître avec l'état. Donne aussi la fourchette pour un exemplaire gradé PSA 8, PSA 9 et PSA 10 ; les prix doivent croître avec la note. Si cette carte n'est presque jamais gradée ou si tu n'as aucun repère de prix, mets null pour la note concernée plutôt que d'inventer.`;
 
   const FORMAT = `Réponds uniquement avec un objet JSON, sans autre texte, de cette forme :
-{"cartes": [{"position": "", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa_eur": {"8": [min, max], "9": [min, max], "10": [min, max]}, "confiance": "haute|moyenne|faible", "remarques": ""}], "remarques_generales": ""}
+{"cartes": [{"position": "", "nom": "nom imprimé", "nom_anglais": "nom anglais officiel", "jeu": "pokemon|magic|yugioh|lorcana|onepiece|dragonball|digimon|fleshandblood|starwars|sport|autre", "extension": "", "numero": "", "langue": "", "version": "holo, reverse, foil, 1ère édition, full art... ou chaîne vide", "rarete": "rareté imprimée", "rarete_niveau": 3, "rarete_explication": "", "tirage": {"valeur": "ex. 25 exemplaires, environ 100 000, ou chaîne vide", "fiabilite": "exact|estime|inconnu", "explication": "une phrase : d'où vient ce chiffre, ou pourquoi il est inconnu"}, "etat_estime": "neuve|excellente|jouee|abimee|indetermine", "etat_remarques": "", "prix_eur": {"neuve": [min, max], "excellente": [min, max], "jouee": [min, max], "abimee": [min, max]}, "prix_psa_eur": {"8": [min, max], "9": [min, max], "10": [min, max]}, "confiance": "haute|moyenne|faible", "remarques": ""}], "remarques_generales": ""}
 Tous les textes sont en français.`;
 
   const PHOTO_PROMPT = `${EXPERT}
@@ -347,6 +348,11 @@ ${FORMAT}`;
       rarete: str(raw.rarete),
       rareteNiveau: Math.min(5, Math.max(0, Math.round(Number(raw.rarete_niveau)) || 0)),
       rareteExplication: str(raw.rarete_explication),
+      tirage: (() => {
+        const t = raw.tirage && typeof raw.tirage === "object" ? raw.tirage : {};
+        const fiabilite = ["exact", "estime"].includes(str(t.fiabilite)) && str(t.valeur) ? str(t.fiabilite) : "inconnu";
+        return { valeur: fiabilite === "inconnu" ? "" : str(t.valeur), fiabilite, explication: str(t.explication) };
+      })(),
       etat: GRADE_NAMES[str(raw.etat_estime)] ? str(raw.etat_estime) : null,
       etatRemarques: str(raw.etat_remarques),
       prix: Object.fromEntries(GRADES.map(([key]) => [key, pair(prix[key])])),
@@ -395,6 +401,13 @@ ${FORMAT}`;
         card.langue ? el("div", { class: "row" }, el("span", {}, "Langue"), el("span", {}, card.langue)) : null,
         el("div", { class: "row" }, el("span", {}, "Rareté"), el("span", {}, rarityText + (card.rareteNiveau ? ` · ${RARITY_SCALE[card.rareteNiveau].toLowerCase()} (${card.rareteNiveau}/5)` : ""))),
         card.rareteExplication ? el("p", { class: "small" }, card.rareteExplication) : null,
+        el(
+          "div",
+          { class: "row" },
+          el("span", {}, "Tirage"),
+          el("span", {}, card.tirage.valeur ? `${card.tirage.valeur} (${card.tirage.fiabilite === "exact" ? "chiffre sûr" : "estimation"})` : "Non communiqué")
+        ),
+        card.tirage.explication ? el("p", { class: "small muted" }, card.tirage.explication) : null,
         card.etatRemarques && mode === "photo" ? el("p", { class: "small" }, el("strong", {}, "État vu sur la photo : "), card.etatRemarques) : null,
         card.remarques ? el("p", { class: "small muted" }, card.remarques) : null
       ),
@@ -437,6 +450,7 @@ ${FORMAT}`;
           "div",
           { class: "badges" },
           example ? el("span", { class: "badge" }, "Chiffres d'illustration") : card.confiance !== "haute" ? el("span", { class: "badge" }, confidence) : null,
+          card.tirage.fiabilite === "exact" ? el("span", { class: "badge" }, `Tirage ${card.tirage.valeur}`) : null,
           index !== null && card.position ? el("span", { class: "badge plain" }, mode === "photo" ? `Carte ${index + 1} · ${card.position}` : `« ${card.position} »`) : null
         ),
         el(
@@ -645,6 +659,7 @@ ${FORMAT}`;
       normalize({
         nom: "Dracaufeu", nom_anglais: "Charizard", jeu: "pokemon", extension: "Set de Base", numero: "4/102", langue: "Français",
         version: "Holo, édition illimitée", rarete: "Rare holographique", rarete_niveau: 4,
+        tirage: { valeur: "", fiabilite: "inconnu", explication: "Le tirage de cette carte n'a jamais été publié. Le numéro 4/102 est sa place dans la série, pas le nombre d'exemplaires." },
         rarete_explication: "L'étoile noire en bas à droite indique une carte rare ; l'illustration brillante en fait une holo, environ une par trois boosters à l'époque. Un tampon « Édition 1 » à gauche de l'illustration la rendrait bien plus rare.",
         etat_estime: "excellente", etat_remarques: "Léger blanchiment des bords, fines rayures sur la partie holo. (Chiffres d'illustration, pas une cote réelle.)",
         prix_eur: { neuve: [350, 600], excellente: [200, 350], jouee: [110, 200], abimee: [50, 110] }, prix_psa_eur: { 8: [700, 1000], 9: [1400, 2200], 10: [3000, 6000] }, confiance: "haute",
