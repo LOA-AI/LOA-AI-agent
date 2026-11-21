@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noctiluque</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Journal et interprétation de rêves, 100 % privé : tout reste sur ton appareil.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0b26">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Noctiluque">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@300;400;500;600&display=swap">
+<style>
+/* Concept : une seule colonne de nuit, lune pâle au centre, or pour l'action, brume lavande pour le texte secondaire. */
+:root{
+  --night:#0a0b26; --night-2:#13154a; --deep:#1b1d63;
+  --veil:rgba(140,150,255,.07); --veil-2:rgba(140,150,255,.13);
+  --line:rgba(190,195,255,.26); --line-soft:rgba(190,195,255,.14);
+  --moon:#f4e9bd; --gold:#e9c96f; --gold-ink:#2a2208;
+  --ink:#eeedff; --mist:#a9abdb; --faint:#7779ad;
+  --rose:#ff6b8e; --sea:#7fd3e6;
+  --display:"Marcellus", "Cormorant", Georgia, serif;
+  --body:"Outfit", "Avenir Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:22px; --tab:78px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:12px}
+[hidden]{display:none!important}
+
+/* ciel */
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+   radial-gradient(60% 45% at 85% 12%, rgba(118,70,200,.45), transparent 70%),
+   radial-gradient(55% 40% at 8% 55%, rgba(60,60,190,.45), transparent 70%),
+   radial-gradient(70% 50% at 70% 95%, rgba(110,50,170,.35), transparent 70%),
+   linear-gradient(180deg,#0a0b26 0%,#10124a 55%,#0b0c2e 100%)}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+.bokeh{position:absolute;border-radius:50%;background:#6fa6ff;filter:blur(2px);opacity:.55}
+.bokeh.b1{width:42px;height:42px;left:9%;top:24%}
+.bokeh.b2{width:28px;height:28px;left:17%;top:29%;opacity:.4}
+.bokeh.b3{width:60px;height:60px;right:-14px;top:58%;background:#9b6cff;filter:blur(10px);opacity:.35}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--night)}
+
+/* structure */
+.app{position:relative;z-index:1;max-width:560px;margin:0 auto;min-height:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(var(--tab) + 28px + env(safe-area-inset-bottom,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:10px;padding-block:12px;
+  background:linear-gradient(180deg,rgba(10,11,38,.92) 60%,rgba(10,11,38,0))}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;border:0;background:transparent;color:var(--ink)}
+.icon-btn:hover{background:var(--veil)}
+.icon-btn svg{width:26px;height:26px}
+.pill{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:8px 18px 8px 8px;border-radius:999px;background:rgba(8,9,30,.7);border:1px solid var(--line-soft)}
+.badge{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:var(--gold-ink);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.pill-title{font:500 1.15rem/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.view{display:flex;flex-direction:column;gap:22px;padding-top:8px;animation:rise .45s ease both}
+@keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+
+.label{font:600 .78rem/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--mist);margin:0}
+.label.gold{color:var(--gold)}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:clamp(1.9rem,7vw,2.4rem);line-height:1.15}
+h2{font-size:1.45rem;line-height:1.2}
+h3{font-size:1.15rem;line-height:1.25}
+p{margin:0}
+.muted{color:var(--mist)}
+.small{font-size:.88rem}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.panel{border:1px solid var(--line);border-radius:var(--r);background:var(--veil);padding:18px}
+.panel.soft{border-color:var(--line-soft)}
+
+/* boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:500;text-decoration:none}
+.btn:hover{background:var(--veil-2)}
+.btn.gold{width:100%;min-height:60px;border:0;background:linear-gradient(180deg,#f2d888,#ddb95b);color:var(--gold-ink);font-size:1.12rem;letter-spacing:.04em;box-shadow:0 8px 30px rgba(233,201,111,.22)}
+.btn.gold:hover{filter:brightness(1.05)}
+.btn.gold:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn.danger{border-color:rgba(255,107,142,.5);color:#ffc2d0}
+.btn.small{min-height:40px;padding:0 16px;font-size:.92rem}
+.link{background:none;border:0;padding:0;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line);background:rgba(20,22,80,.55);color:var(--ink);font-size:1rem}
+.chip[aria-pressed="true"]{background:var(--moon);color:var(--gold-ink);border-color:var(--moon)}
+.chip.sm{min-height:36px;padding:0 14px;font-size:.88rem}
+.tag{display:inline-flex;align-items:center;min-height:28px;padding:0 12px;border-radius:999px;background:var(--veil-2);color:var(--mist);font-size:.8rem}
+.tag.gold{background:rgba(233,201,111,.16);color:var(--gold)}
+
+/* lune d'enregistrement */
+.orb-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:6px}
+.orb{position:relative;width:min(58vw,236px);aspect-ratio:1;max-width:100%;border-radius:50%;border:0;
+  background:radial-gradient(circle at 42% 38%,#fff9e0 0%,var(--moon) 45%,#d9c98e 100%);
+  box-shadow:0 0 60px 18px rgba(244,233,189,.18),0 0 140px 60px rgba(120,110,220,.18);display:grid;place-items:center;transition:transform .2s}
+.orb:hover{transform:scale(1.02)}
+.orb::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(244,233,189,.18)}
+.orb svg{width:30%;height:30%;color:#6c6a7c}
+.orb .stop{width:23%;aspect-ratio:1;border-radius:14%;background:#8f8e9b}
+.orb.rec{animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{50%{box-shadow:0 0 80px 30px rgba(244,233,189,.28),0 0 160px 80px rgba(160,110,240,.25)}}
+.timer{display:flex;align-items:center;gap:12px;font:500 2rem/1 var(--body);font-variant-numeric:tabular-nums;color:var(--moon)}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--faint)}
+.rec-on .dot{background:var(--rose);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.orb-hint{font-size:.9rem;color:var(--mist);text-align:center}
+
+textarea{width:100%;min-height:150px;resize:vertical;padding:18px 20px;border-radius:var(--r);border:1px solid var(--line);background:rgba(14,16,70,.55);color:var(--ink);font-size:1.08rem;line-height:1.55}
+textarea::placeholder{color:#b8badf;opacity:.85}
+input[type="search"],input[type="password"],input[type="text"]{width:100%;min-height:50px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:rgba(14,16,70,.55)}
+.field-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+
+/* cartes */
+.dream-card{display:block;width:100%;text-align:left;border:1px solid var(--line-soft);border-radius:var(--r);background:var(--veil);padding:16px 18px;color:var(--ink)}
+.dream-card:hover{background:var(--veil-2)}
+.dream-card .meta{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;color:var(--mist);letter-spacing:.04em}
+.dream-card h3{margin:6px 0 4px}
+.dream-card p{color:var(--mist);font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dream-card .chips{gap:6px;margin-top:10px}
+
+.moon-card{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.moon-card svg{width:74px;height:74px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{border:1px solid var(--line-soft);border-radius:18px;padding:14px 12px;background:var(--veil);min-width:0}
+.stat b{display:block;font:500 1.5rem/1.2 var(--body);color:var(--moon);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat span{font-size:.75rem;color:var(--mist);letter-spacing:.06em;text-transform:uppercase}
+
+/* analyse */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:118px 1fr 42px;gap:10px;align-items:center;font-size:.92rem}
+.bar .track{height:8px;border-radius:99px;background:var(--veil-2);overflow:hidden}
+.bar .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#9e8cff,var(--moon))}
+.bar .pct{text-align:right;color:var(--mist);font-variant-numeric:tabular-nums}
+.reading p+p{margin-top:12px}
+.sym{border:1px solid var(--line-soft);border-radius:var(--r);padding:16px 18px;background:var(--veil)}
+.sym-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sym-head .tag{flex:none}
+.word{color:var(--mist);font-size:.85rem;margin-top:2px}
+.seg{display:flex;gap:6px;margin:14px 0 10px;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line-soft);background:transparent;color:var(--mist);font-size:.82rem}
+.seg button[aria-selected="true"]{background:var(--veil-2);color:var(--ink);border-color:var(--line)}
+.sym .q{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-soft);color:var(--moon);font-style:italic}
+.echo{color:var(--sea);font-size:.85rem;margin-top:8px}
+.qlist{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.tip h3{color:var(--gold);margin-bottom:6px}
+.title-input{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:4px 0;min-height:auto;font:400 clamp(1.7rem,6.5vw,2.2rem)/1.2 var(--display);width:100%;color:var(--ink)}
+.title-input:focus{outline:none;border-bottom-color:var(--gold)}
+.quote{font-size:.98rem;color:var(--mist);white-space:pre-wrap;border-left:2px solid var(--line);padding-left:14px}
+
+/* symboles */
+details.entry{border-bottom:1px solid var(--line-soft)}
+details.entry summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 4px;cursor:pointer}
+details.entry summary::-webkit-details-marker{display:none}
+details.entry summary h3{font-size:1.08rem}
+details.entry .body{padding:0 4px 16px;display:flex;flex-direction:column;gap:10px;font-size:.95rem}
+details.entry .body b{display:block;font:600 .72rem/1.4 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.hscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.hscroll .chip{flex:none}
+
+/* réglages */
+.setting{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.switch{position:relative;flex:none;width:54px;height:32px;border-radius:99px;border:1px solid var(--line);background:var(--veil-2)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--mist);transition:transform .2s,background .2s}
+.switch[aria-checked="true"]{background:rgba(233,201,111,.3)}
+.switch[aria-checked="true"]::after{transform:translateX(22px);background:var(--gold)}
+.refs{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.88rem;color:var(--mist)}
+.refs i{color:var(--ink)}
+.shield{display:flex;gap:12px;align-items:flex-start}
+.shield svg{flex:none;width:26px;height:26px;color:var(--gold);margin-top:2px}
+
+/* barre d'onglets */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+  background:linear-gradient(180deg,rgba(10,11,38,0),rgba(8,9,30,.96) 30%)}
+.tabbar-in{max-width:560px;margin:0 auto;height:var(--tab);display:grid;grid-template-columns:repeat(5,1fr);align-items:end;padding-bottom:8px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:var(--faint);font:500 .66rem/1 var(--body);letter-spacing:.1em;text-transform:uppercase;padding:6px 0}
+.tab svg{width:26px;height:26px}
+.tab[aria-current="page"]{color:var(--moon)}
+.tab.mic{align-self:center}
+.tab.mic span.disc{width:70px;height:70px;margin-top:-30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#f6dc8f,#c9a446);color:#5a4614;box-shadow:0 0 0 6px rgba(10,11,38,.9),0 0 30px rgba(233,201,111,.35)}
+.tab.mic svg{width:30px;height:30px}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));background:rgba(5,6,22,.82);backdrop-filter:blur(6px)}
+.sheet{width:100%;max-width:440px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(180deg,#171a5a,#0e1040);padding:26px 22px;display:flex;flex-direction:column;gap:16px}
+.lock-screen{background:radial-gradient(60% 40% at 50% 30%,rgba(120,90,220,.35),transparent),var(--night)}
+.lock-moon{width:120px;height:120px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 42% 38%,#fff9e0,var(--moon) 45%,#d9c98e);box-shadow:0 0 60px 18px rgba(244,233,189,.18)}
+.err{color:#ffb3c4;font-size:.9rem;min-height:1.3em}
+.toast{position:fixed;left:50%;bottom:calc(var(--tab) + 24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;max-width:min(92vw,460px);padding:12px 18px;border-radius:16px;background:#22256d;border:1px solid var(--line);font-size:.92rem;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.bar{grid-template-columns:96px 1fr 38px}.stat b{font-size:1.3rem}}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><canvas id="stars"></canvas><span class="bokeh b1"></span><span class="bokeh b2"></span><span class="bokeh b3"></span></div>
+
+<div class="app">
+  <header class="top">
+    <button class="icon-btn" id="backBtn" aria-label="Retour" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="pill"><span class="badge" id="pillBadge">0</span><span class="pill-title" id="pillTitle">Ce soir</span></div>
+    <button class="icon-btn" id="lockNow" aria-label="Verrouiller maintenant" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </button>
+  </header>
+
+  <!-- NUIT -->
+  <section class="view" id="v-nuit" data-title="Ce soir">
+    <div class="stack">
+      <p class="label gold" id="dateLine"></p>
+      <h1 id="greet">Bonsoir</h1>
+    </div>
+    <div class="panel moon-card">
+      <span id="moonSvg" aria-hidden="true"></span>
+      <div class="stack" style="gap:4px">
+        <p class="label">Ciel de cette nuit</p>
+        <h3 id="moonName"></h3>
+        <p class="muted small" id="moonPct"></p>
+      </div>
+    </div>
+    <button class="btn gold" data-go="raconter">Raconter mon rêve</button>
+    <div class="stats" id="stats"></div>
+    <div class="stack">
+      <div class="field-head"><p class="label">Derniers rêves</p><button class="link small" data-go="journal">Tout le journal</button></div>
+      <div class="stack" id="recent"></div>
+    </div>
+    <div class="panel tip">
+      <h3>Conseil de la nuit</h3>
+      <p id="tip"></p>
+    </div>
+    <div class="shield muted small">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <p>Tes rêves restent sur cet appareil. Aucun compte, aucun serveur, aucune intelligence artificielle distante : l'interprétation se fait ici, hors ligne.</p>
+    </div>
+  </section>
+
+  <!-- RACONTER -->
+  <section class="view" id="v-raconter" data-title="Je raconte mon rêve" hidden>
+    <div class="orb-wrap" id="orbWrap">
+      <button class="orb" id="orb" aria-label="Dicter mon rêve">
+        <svg id="orbMic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        <span class="stop" id="orbStop" hidden></span>
+      </button>
+      <div class="timer"><span class="dot"></span><span id="timer">00:00</span></div>
+      <p class="orb-hint" id="orbHint">Touche la lune pour dicter, ou écris ci-dessous.</p>
+    </div>
+
+    <div class="stack">
+      <div class="field-head"><label class="label" for="dreamText">Ton rêve</label><button class="link small" id="sampleBtn">Essayer un exemple</button></div>
+      <textarea id="dreamText" placeholder="Quelques mots suffisent : un lieu, une sensation, un visage…"></textarea>
+    </div>
+
+    <div class="stack">
+      <p class="label gold">Clarté du rêve</p>
+      <div class="chips" id="clarity" role="radiogroup" aria-label="Clarté du rêve"></div>
+    </div>
+
+    <div class="stack">
+      <p class="label gold">Au réveil, je ressentais</p>
+      <div class="chips" id="emoChips"></div>
+    </div>
+
+    <button class="btn gold" id="analyzeBtn" disabled>Analyser le rêve</button>
+  </section>
+
+  <!-- ANALYSE -->
+  <section class="view" id="v-analyse" data-title="Interprétation" hidden>
+    <div id="analysis"></div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section class="view" id="v-journal" data-title="Mon journal" hidden>
+    <input type="search" id="jSearch" placeholder="Chercher un mot, un symbole…" aria-label="Chercher dans le journal">
+    <div class="stack" id="jList"></div>
+    <div class="panel soft stack" id="jStats"></div>
+  </section>
+
+  <!-- SYMBOLES -->
+  <section class="view" id="v-symboles" data-title="Dictionnaire des symboles" hidden>
+    <p class="muted" id="symIntro"></p>
+    <input type="search" id="sSearch" placeholder="Serpent, chute, maison…" aria-label="Chercher un symbole">
+    <div class="hscroll" id="catChips"></div>
+    <div id="sList"></div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section class="view" id="v-reglages" data-title="Confidentialité & réglages" hidden>
+    <div class="panel stack">
+      <div class="shield">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div class="stack" style="gap:6px">
+          <h3>Ce qui reste privé</h3>
+          <p class="muted small">Tes rêves sont enregistrés uniquement dans la mémoire de ce navigateur, sur cet appareil. L'application n'a ni compte, ni serveur, ni traqueur, et n'envoie aucun texte nulle part : la politique de sécurité de la page interdit les envois de données vers l'extérieur. L'interprétation s'appuie sur une base de recherche intégrée et fonctionne hors ligne.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel stack" id="lockPanel"></div>
+
+    <div class="panel stack">
+      <div class="setting">
+        <div class="stack" style="gap:4px">
+          <h3>Dictée vocale</h3>
+          <p class="muted small">La reconnaissance vocale est fournie par ton téléphone ou ton navigateur. Selon l'appareil, elle peut transiter par Apple ou Google. Pour une confidentialité totale, écris au clavier ou utilise la dictée hors ligne de ton clavier.</p>
+        </div>
+        <button class="switch" id="dictSwitch" role="switch" aria-checked="false" aria-label="Activer la dictée vocale"></button>
+      </div>
+    </div>
+
+    <div class="panel stack">
+      <h3>Sauvegarde</h3>
+      <p class="muted small">Exporte ton journal pour le garder ou le transférer sur un autre appareil. Le fichier n'est pas chiffré : range-le en lieu sûr.</p>
+      <div class="row">
+        <button class="btn small" id="exportBtn">Télécharger</button>
+        <button class="btn small" id="copyBtn">Copier</button>
+        <label class="btn small" for="importFile">Importer</label>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+      <button class="btn small danger" id="wipeBtn">Effacer tout le journal</button>
+    </div>
+
+    <div class="panel soft stack">
+      <h3>Méthode & sources</h3>
+      <p class="muted small">Chaque symbole est lu sous quatre angles : les archétypes de Jung, la psychanalyse freudienne, la recherche scientifique sur les rêves (études de contenu, neurosciences du sommeil) et les traditions du monde. Ce sont des pistes de réflexion, pas des prédictions ni un diagnostic.</p>
+      <ol class="refs">
+        <li>Freud, S. (1900). <i>L'Interprétation du rêve</i>.</li>
+        <li>Jung, C. G. (1964). <i>L'Homme et ses symboles</i>.</li>
+        <li>Hall, C. & Van de Castle, R. (1966). <i>The Content Analysis of Dreams</i>.</li>
+        <li>Hobson, J. A. & McCarley, R. (1977). Activation-synthèse. <i>Am. J. Psychiatry</i>.</li>
+        <li>Revonsuo, A. (2000). Théorie de la simulation de la menace. <i>Behavioral and Brain Sciences</i>.</li>
+        <li>Nielsen, T. et al. (2003). Les rêves typiques. <i>Dreaming</i>.</li>
+        <li>Domhoff, G. W. (2003). <i>The Scientific Study of Dreams</i> (hypothèse de continuité).</li>
+        <li>Walker, M. & van der Helm, E. (2009). Overnight therapy? <i>Psychological Bulletin</i>.</li>
+        <li>Schredl, M. (2018). <i>Researching Dreams</i>.</li>
+        <li>Arnulf, I. et al. (2014). Rêves d'examen. <i>Consciousness and Cognition</i>.</li>
+        <li>Rozen, N. & Soffer-Dudek, N. (2018). Rêves de dents. <i>Frontiers in Psychology</i>.</li>
+        <li>Selterman, D. et al. (2014). Rêves du partenaire. <i>Soc. Psych. and Personality Science</i>.</li>
+        <li>Krakow, B. et al. (2001). Répétition d'imagerie pour les cauchemars. <i>JAMA</i>.</li>
+        <li>LaBerge, S. (1985). <i>Le Rêve lucide</i>.</li>
+        <li>Barrett, D. (1993). Incubation de rêves. <i>Dreaming</i>.</li>
+        <li>Dement, W. & Wolpert, E. (1958). Stimuli externes et rêve. <i>J. Exp. Psychology</i>.</li>
+        <li>Artémidore de Daldis (IIe s.). <i>La Clef des songes</i>.</li>
+        <li>Papyrus Chester Beatty III (Égypte, vers 1275 av. J.-C.).</li>
+      </ol>
+      <p class="muted small">Si des cauchemars fréquents pèsent sur tes journées, parles-en à un médecin ou à un psychologue : il existe des thérapies efficaces.</p>
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar" aria-label="Navigation">
+  <div class="tabbar-in">
+    <button class="tab" data-go="nuit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Ce soir</button>
+    <button class="tab" data-go="journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>Journal</button>
+    <button class="tab mic" data-go="raconter" aria-label="Raconter mon rêve"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span></button>
+    <button class="tab" data-go="symboles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.5l2.3 6.2 6.2 2.3-6.2 2.3L12 19.5l-2.3-6.2L3.5 11l6.2-2.3z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg>Symboles</button>
+    <button class="tab" data-go="reglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/></svg>Privé</button>
+  </div>
+</nav>
+
+<!-- Verrou -->
+<div class="overlay lock-screen" id="lockScreen" hidden>
+  <form class="sheet" id="unlockForm" autocomplete="off">
+    <div class="lock-moon" aria-hidden="true"></div>
+    <h2 style="text-align:center">Ton journal est verrouillé</h2>
+    <p class="muted small" style="text-align:center">Entre ton code pour déchiffrer tes rêves sur cet appareil.</p>
+    <input type="password" id="unlockPin" inputmode="numeric" placeholder="Code secret" aria-label="Code secret" autocomplete="current-password">
+    <p class="err" id="unlockErr"></p>
+    <button class="btn gold" type="submit">Déverrouiller</button>
+  </form>
+</div>
+
+<!-- Consentement dictée -->
+<div class="overlay" id="dictSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dictTitle">
+    <h2 id="dictTitle">Avant de dicter</h2>
+    <p class="muted">La dictée utilise la reconnaissance vocale de ton appareil ou de ton navigateur. Sur certains téléphones, la voix est traitée par Apple ou Google. Ton rêve, lui, n'est jamais enregistré ailleurs que sur ton appareil.</p>
+    <p class="muted small">Pour une confidentialité totale, choisis le clavier.</p>
+    <button class="btn gold" id="dictYes">Activer la dictée</button>
+    <button class="btn" id="dictNo">Je préfère écrire</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="symboles.js"></script>
+<script>
+(() => {
+"use strict";
+const { SYMBOLS, CATS, EMO, norm } = window.ONIRO;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const SYM_BY_ID = Object.fromEntries(SYMBOLS.map((s) => [s.id, s]));
+const CLARITY = ["Flou", "Clair", "Vif", "Lucide"];
+const EMO_IDS = Object.keys(EMO);
+
+/* ================= Stockage local (+ chiffrement optionnel) ================= */
+const K_DATA = "noctiluque:data", K_VAULT = "noctiluque:vault", K_PREFS = "noctiluque:prefs";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+const state = { dreams: [], key: null, salt: null, locked: false, current: null, draft: { clarity: null, emos: [] }, catFilter: null };
+let prefs = { dictation: null };
+try { prefs = Object.assign(prefs, JSON.parse(store.get(K_PREFS) || "{}")); } catch {}
+const savePrefs = () => store.set(K_PREFS, JSON.stringify(prefs));
+
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function deriveKey(pin, salt) {
+  const base = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 310000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function persist() {
+  const payload = JSON.stringify({ v: 1, dreams: state.dreams });
+  if (state.key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, state.key, enc.encode(payload));
+    store.set(K_VAULT, JSON.stringify({ v: 1, salt: b64(state.salt), iv: b64(iv), ct: b64(ct) }));
+    store.del(K_DATA);
+  } else {
+    if (!store.set(K_DATA, payload)) toast("Impossible d'enregistrer : la mémoire du navigateur est bloquée ou pleine.");
+    store.del(K_VAULT);
+  }
+}
+function loadPlain() {
+  try { const d = JSON.parse(store.get(K_DATA) || "null"); state.dreams = (d && d.dreams) || []; } catch { state.dreams = []; }
+}
+async function unlock(pin) {
+  const vault = JSON.parse(store.get(K_VAULT));
+  const salt = unb64(vault.salt);
+  const key = await deriveKey(pin, salt);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(vault.iv) }, key, unb64(vault.ct));
+  state.dreams = JSON.parse(dec.decode(pt)).dreams || [];
+  state.key = key; state.salt = salt; state.locked = false;
+}
+const hasVault = () => !!store.get(K_VAULT);
+const cryptoOK = () => !!(window.crypto && crypto.subtle);
+
+/* ================= Moteur d'analyse ================= */
+function tokenize(text) {
+  return norm(text).split(/[^a-z0-9-]+/).map((t) => t.replace(/^-+|-+$/g, "")).filter(Boolean);
+}
+function countKeys(K, tokens, joined) {
+  let n = 0, first = Infinity, word = null;
+  for (const k of K) {
+    if (k.t === "p") {
+      let i = joined.indexOf(k.v);
+      while (i !== -1) { n++; if (i < first) { first = i; word = k.v.trim(); } i = joined.indexOf(k.v, i + 1); }
+    } else {
+      let pos = 0;
+      for (let ti = 0; ti < tokens.length; ti++) {
+        const t = tokens[ti];
+        const ok = k.t === "s" ? t.startsWith(k.v) : (t === k.v || t === k.v + "s" || t === k.v + "x");
+        if (ok) { n++; const p = joined.indexOf(" " + t + " ", pos); if (p !== -1 && p < first) { first = p; word = t; } }
+        pos += t.length + 1;
+      }
+    }
+  }
+  return { n, first, word };
+}
+function analyze(dream) {
+  const tokens = tokenize(dream.text || "");
+  const joined = " " + tokens.join(" ") + " ";
+  const hits = [];
+  for (const s of SYMBOLS) {
+    const r = countKeys(s.K, tokens, joined);
+    if (r.n) hits.push({ s, n: r.n, first: r.first, word: r.word, score: r.n + (s.c === "T" ? 1.5 : 0) });
+  }
+  hits.sort((a, b) => b.score - a.score || a.first - b.first);
+  const emo = {};
+  let total = 0;
+  for (const id of EMO_IDS) {
+    let v = countKeys(EMO[id].K, tokens, joined).n;
+    if ((dream.emos || []).includes(id)) v += 3;
+    if (v) { emo[id] = v; total += v; }
+  }
+  const emoList = Object.entries(emo).map(([id, v]) => ({ id, v, pct: Math.round((v / total) * 100) })).sort((a, b) => b.v - a.v);
+  return { hits, emoList, words: tokens.length };
+}
+
+const CAT_DOMAIN = {
+  T: "un scénario que partagent des millions de rêveurs : il touche à une préoccupation très humaine",
+  N: "les éléments naturels, qui décrivent souvent ton climat émotionnel de fond",
+  A: "des animaux, porteurs de tes instincts et de tes énergies vitales",
+  P: "des personnes, qui figurent tes relations ou des facettes de toi-même",
+  C: "le corps, qui parle de ton image de toi et de ton pouvoir d'agir",
+  L: "des lieux, qui décrivent l'étape de vie ou l'espace intérieur que tu traverses",
+  O: "des objets et des véhicules, qui parlent de tes ressources et de ta direction",
+  G: "des gestes, qui montrent ta manière de réagir face à ce que tu vis"
+};
+const EMO_READ = {
+  peur: "La tonalité est surtout anxieuse. Selon la théorie de la simulation de la menace (Revonsuo), le rêve répète des situations difficiles pour mieux t'y préparer : la peur ressentie ne prédit rien, elle signale ce qui mobilise ta vigilance en ce moment.",
+  tristesse: "Une tristesse traverse ce rêve. Le sommeil paradoxal aide à digérer les émotions de la journée (Walker parle de « thérapie de nuit ») : ce rêve fait peut-être une partie de ce travail de deuil ou de lâcher-prise.",
+  colere: "De la colère circule dans ce rêve. Les études de contenu montrent que l'agressivité est fréquente en rêve : c'est souvent une énergie d'affirmation qui ne trouve pas sa place le jour.",
+  honte: "La gêne ou la honte dominent. Ces rêves accompagnent souvent des moments d'exposition au regard des autres, et la peur d'être jugé(e).",
+  joie: "C'est un rêve à tonalité joyeuse, ce qui est plus rare qu'on ne le croit : les émotions négatives dominent dans la plupart des rêves (Hall & Van de Castle). Il mérite d'être gardé en mémoire.",
+  serenite: "Une sensation de calme domine. Les rêves paisibles accompagnent souvent des périodes de récupération ou de réconciliation intérieure.",
+  emerveillement: "L'émerveillement colore ce rêve. Les chercheurs parlent de rêves « transcendants » : ils laissent souvent une trace durable et un sentiment de sens.",
+  confusion: "Le rêve paraît étrange ou décousu. C'est normal : en sommeil paradoxal, le cortex préfrontal (logique, cohérence) est moins actif. Les associations bizarres sont parfois les plus parlantes."
+};
+const CLAR_READ = {
+  Flou: "Tu t'en souviens de façon floue : c'est le cas de la plupart des rêves, qui s'effacent en quelques minutes. Noter même trois mots dès le réveil améliore beaucoup le rappel au fil des semaines.",
+  Clair: "Ton souvenir est net : les détails que tu as retenus sont ceux qui ont le plus de charge pour toi.",
+  Vif: "Un rêve très vif vient souvent du sommeil paradoxal de fin de nuit, plus long et plus émotionnel. Ces rêves sont aussi ceux qui reprennent le plus de préoccupations actuelles.",
+  Lucide: "Tu savais que tu rêvais : c'est un rêve lucide. Environ la moitié des gens en ont vécu au moins un, et la lucidité peut s'entraîner (tests de réalité, méthode MILD de LaBerge)."
+};
+const listFr = (a) => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " et " + a[a.length - 1];
+
+function synthesis(dream, an, history) {
+  const p = [];
+  const top = an.hits.slice(0, 3).map((h) => h.s.n.toLowerCase());
+  if (top.length) {
+    const catCount = {};
+    an.hits.forEach((h) => (catCount[h.s.c] = (catCount[h.s.c] || 0) + h.score));
+    const domCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0][0];
+    p.push(`Ton rêve s'organise autour de ${listFr(top.map((t) => "« " + t + " »"))}. Il fait surtout appel à ${CAT_DOMAIN[domCat]}.`);
+    const T = an.hits.filter((h) => h.s.c === "T");
+    if (T.length && domCat !== "T") p.push(`On y trouve aussi un rêve typique (${T[0].s.n.toLowerCase()}), l'un de ces scénarios que les enquêtes retrouvent dans toutes les cultures.`);
+  } else {
+    p.push("Ce récit ne contient pas encore de symbole répertorié. Ajoute un lieu, une personne, un animal ou une action : même un détail qui te semble anodin peut ouvrir la lecture.");
+  }
+  if (an.emoList.length) p.push(EMO_READ[an.emoList[0].id]);
+  if (dream.clarity) p.push(CLAR_READ[dream.clarity]);
+  p.push("Selon l'hypothèse de continuité (Domhoff, Schredl), les rêves reprennent nos préoccupations éveillées. Cherche ce qui, dans les jours qui précèdent, fait écho à ces images, et aussi 5 à 7 jours plus tôt : c'est l'effet de décalage onirique (Nielsen).");
+  return p;
+}
+function pistes(dream, an, echoes) {
+  const out = [];
+  const fear = an.emoList.find((e) => e.id === "peur");
+  const nightmare = (fear && fear.pct >= 35) || an.hits.some((h) => ["poursuite", "attaque-combat", "catastrophe", "monstre"].includes(h.s.id) && fear);
+  if (nightmare) out.push(["Réécrire le cauchemar", "Pendant la journée, écris une nouvelle version du rêve avec une fin différente, celle que tu veux. Relis-la ou imagine-la 10 minutes par jour pendant une semaine. Cette « répétition d'imagerie » (Krakow, 2001) réduit nettement les cauchemars."]);
+  if (dream.clarity === "Lucide") out.push(["Prolonger la lucidité", "Quand tu deviens lucide, frotte tes mains ou tourne sur toi-même pour stabiliser le rêve. Le soir, répète : « La prochaine fois que je rêve, je m'en rendrai compte » (MILD)."]);
+  else if (an.hits.some((h) => ["voler-dans-les-airs", "telephone-ecrans", "horloge-temps", "livre-lettre", "mains", "lumiere"].includes(h.s.id))) out.push(["Un signe de rêve à utiliser", "Ce rêve contient un élément idéal pour devenir lucide. Plusieurs fois par jour, relis un texte ou regarde l'heure deux fois : en rêve, ça change. Ce réflexe finit par se produire en rêvant."]);
+  if (echoes.length) out.push(["Un motif qui revient", `${listFr(echoes.map((e) => "« " + e.s.n.toLowerCase() + " »"))} ${echoes.length > 1 ? "reviennent" : "revient"} dans ton journal. Les symboles récurrents signalent souvent une question non résolue : relis les rêves concernés côte à côte.`]);
+  out.push(["Poser une question à la nuit", "Ce soir, avant de dormir, formule une question précise liée à ce rêve. Dans l'étude d'incubation de Deirdre Barrett (1993), environ la moitié des participants ont rêvé de leur problème en une semaine."]);
+  return out.slice(0, 3);
+}
+
+/* ================= Lune ================= */
+function moonPhase(d = new Date()) {
+  const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
+  let ph = ((d - ref) / 86400000 / syn) % 1; if (ph < 0) ph += 1;
+  const names = ["Nouvelle lune", "Premier croissant", "Premier quartier", "Lune gibbeuse croissante", "Pleine lune", "Lune gibbeuse décroissante", "Dernier quartier", "Dernier croissant"];
+  return { ph, name: names[Math.floor(((ph + 1 / 16) % 1) * 8)], illum: Math.round((1 - Math.cos(2 * Math.PI * ph)) / 2 * 100) };
+}
+function moonSVG(ph) {
+  const rx = 50 * Math.abs(Math.cos(2 * Math.PI * ph));
+  const waxing = ph < 0.5, outer = waxing ? 1 : 0;
+  const inner = waxing ? (ph < 0.25 ? 0 : 1) : (ph < 0.75 ? 0 : 1);
+  const lit = `M50 0 A50 50 0 0 ${outer} 50 100 A${rx.toFixed(2)} 50 0 0 ${inner} 50 0Z`;
+  return `<svg viewBox="-6 -6 112 112"><defs><radialGradient id="mg" cx=".42" cy=".38"><stop offset="0" stop-color="#fff9e0"/><stop offset=".5" stop-color="#f4e9bd"/><stop offset="1" stop-color="#d9c98e"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="#23266b"/><path d="${lit}" fill="url(#mg)"/><circle cx="50" cy="50" r="53" fill="none" stroke="rgba(244,233,189,.2)"/></svg>`;
+}
+
+/* ================= Utilitaires UI ================= */
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3800); }
+const fmtDate = (iso, opt = { weekday: "long", day: "numeric", month: "long" }) => new Date(iso).toLocaleDateString("fr-FR", opt);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function dreamTitle(d, an) {
+  if (d.title) return d.title;
+  const h = (an || analyze(d)).hits.slice(0, 2).map((x) => x.s.n);
+  return h.length ? h.join(" · ") : "Rêve sans titre";
+}
+function streak() {
+  const days = new Set(state.dreams.map((d) => new Date(d.created).toDateString()));
+  let n = 0; const c = new Date();
+  if (!days.has(c.toDateString())) c.setDate(c.getDate() - 1);
+  while (days.has(c.toDateString())) { n++; c.setDate(c.getDate() - 1); }
+  return n;
+}
+function symbolFreq() {
+  const f = {};
+  state.dreams.forEach((d) => (d.sym || []).forEach((id) => (f[id] = (f[id] || 0) + 1)));
+  return Object.entries(f).sort((a, b) => b[1] - a[1]);
+}
+function dreamCard(d) {
+  const an = analyze(d);
+  const chips = an.hits.slice(0, 3).map((h) => `<span class="tag">${esc(h.s.n)}</span>`).join("");
+  return `<button class="dream-card" data-open="${d.id}"><div class="meta"><span>${esc(fmtDate(d.created, { day: "numeric", month: "short", year: "numeric" }))}</span><span>${esc(d.clarity || "")}</span></div><h3>${esc(dreamTitle(d, an))}</h3><p>${esc(d.text)}</p>${chips ? `<div class="chips">${chips}</div>` : ""}</button>`;
+}
+
+/* ================= Vues ================= */
+const VIEWS = ["nuit", "raconter", "analyse", "journal", "symboles", "reglages"];
+let prevView = "nuit";
+function show(name, push = true) {
+  if (!VIEWS.includes(name)) name = "nuit";
+  if (name === "analyse" && !state.current) name = "journal";
+  const curr = VIEWS.find((v) => !$("#v-" + v).hidden);
+  if (curr && curr !== name) prevView = curr;
+  VIEWS.forEach((v) => ($("#v-" + v).hidden = v !== name));
+  $("#pillTitle").textContent = $("#v-" + name).dataset.title;
+  $("#backBtn").hidden = name === "nuit";
+  $$(".tab").forEach((t) => t.dataset.go === name ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
+  if (name !== "raconter" && recording) stopDictation();
+  ({ nuit: renderNuit, raconter: renderRaconter, analyse: renderAnalyse, journal: renderJournal, symboles: renderSymboles, reglages: renderReglages })[name]();
+  updateBadge();
+  if (push && location.hash !== "#" + name) { try { history.pushState(null, "", "#" + name); } catch { location.hash = name; } }
+  window.scrollTo(0, 0);
+}
+function updateBadge() { $("#pillBadge").textContent = state.dreams.length; }
+
+const TIPS = [
+  "Garde ton téléphone ou un carnet près du lit et note ton rêve avant de bouger : les souvenirs de rêve s'effacent en quelques minutes.",
+  "Tenir un journal suffit à augmenter le nombre de rêves dont on se souvient, souvent dès les premières semaines (Schredl).",
+  "Avant de dormir, pose-toi une question précise. C'est l'incubation : dans l'étude de Deirdre Barrett, environ la moitié des participants ont rêvé de leur problème en une semaine.",
+  "Test de réalité : relis un texte ou regarde l'heure deux fois. En rêve, ils changent souvent. C'est la base de la lucidité (LaBerge).",
+  "Le sommeil paradoxal s'allonge en fin de nuit : les rêves les plus riches arrivent souvent au petit matin.",
+  "Un cauchemar qui revient peut se réécrire : imagine une nouvelle fin le jour et répète-la quelques minutes chaque jour.",
+  "Les rêves reprennent la veille, mais aussi des événements d'il y a 5 à 7 jours : c'est l'effet de décalage onirique (Nielsen).",
+  "L'alcool réduit le sommeil paradoxal en début de nuit ; les rêves reviennent ensuite plus intenses, souvent au petit matin.",
+  "Au réveil, garde les yeux fermés et reste immobile quelques secondes : retrouver la position du rêve aide à s'en souvenir."
+];
+function renderNuit() {
+  const now = new Date(), h = now.getHours();
+  $("#greet").textContent = h >= 5 && h < 12 ? "Bonjour, de retour de la nuit ?" : h < 18 && h >= 12 ? "Bon après-midi" : "Bonsoir";
+  $("#dateLine").textContent = fmtDate(now);
+  const m = moonPhase(now);
+  $("#moonSvg").innerHTML = moonSVG(m.ph);
+  $("#moonName").textContent = m.name;
+  $("#moonPct").textContent = `${m.illum} % de la lune éclairée`;
+  const freq = symbolFreq();
+  const topSym = freq.length ? SYM_BY_ID[freq[0][0]] : null;
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${state.dreams.length}</b><span>Rêves notés</span></div>
+    <div class="stat"><b>${streak()}</b><span>Nuits d'affilée</span></div>
+    <div class="stat"><b title="${topSym ? esc(topSym.n) : ""}">${topSym ? esc(topSym.n) : "—"}</b><span>Symbole fréquent</span></div>`;
+  const rec = [...state.dreams].sort((a, b) => b.created.localeCompare(a.created)).slice(0, 3);
+  $("#recent").innerHTML = rec.length ? rec.map(dreamCard).join("") :
+    `<div class="panel soft"><p class="muted">Ton journal est encore vide. Raconte ton premier rêve : il apparaîtra ici, avec son interprétation.</p></div>`;
+  const day = Math.floor(now / 86400000);
+  $("#tip").textContent = TIPS[day % TIPS.length];
+  updateBadge();
+}
+
+/* --- Raconter --- */
+const SAMPLE = "J'étais dans la maison de mon enfance, mais elle avait des pièces que je ne connaissais pas. Un serpent doré me suivait dans les couloirs et je courais sans pouvoir avancer. Puis j'arrivais au bord de la mer, l'eau était très claire, et ma grand-mère m'attendait sur la plage avec une clé dans la main. Je me sentais apaisée.";
+function renderRaconter() {
+  $("#clarity").innerHTML = CLARITY.map((c) => `<button class="chip" role="radio" aria-pressed="${state.draft.clarity === c}" aria-checked="${state.draft.clarity === c}" data-clar="${c}">${c}</button>`).join("");
+  $("#emoChips").innerHTML = EMO_IDS.map((id) => `<button class="chip sm" aria-pressed="${state.draft.emos.includes(id)}" data-emo="${id}">${EMO[id].n}</button>`).join("");
+  updateAnalyzeBtn();
+  updateBadge();
+}
+function updateAnalyzeBtn() { $("#analyzeBtn").disabled = $("#dreamText").value.trim().length < 3; }
+
+/* --- Analyse --- */
+function renderAnalyse() {
+  const d = state.dreams.find((x) => x.id === state.current);
+  if (!d) { show("journal"); return; }
+  const an = analyze(d);
+  const history = state.dreams.filter((x) => x.id !== d.id);
+  const echoes = an.hits.map((h) => ({ s: h.s, n: history.filter((x) => (x.sym || []).includes(h.s.id)).length })).filter((e) => e.n > 0);
+  const echoMap = Object.fromEntries(echoes.map((e) => [e.s.id, e.n]));
+  const syn = synthesis(d, an, history);
+  const tips = pistes(d, an, echoes);
+  const symCards = an.hits.slice(0, 7).map((h, i) => {
+    const s = h.s;
+    const tabs = [["j", "Archétypes"], ["s", "Science"], ["f", "Psychanalyse"], ["t", "Traditions"]].filter(([k]) => s[k]);
+    return `<article class="sym" data-sym="${s.id}">
+      <div class="sym-head"><div><h3>${esc(s.n)}</h3><p class="word">« ${esc(h.word || "")} »${h.n > 1 ? ` · ${h.n} fois` : ""}</p></div><span class="tag${s.c === "T" ? " gold" : ""}">${esc(s.cat)}</span></div>
+      <div class="seg" role="tablist" aria-label="Lectures de ${esc(s.n)}">${tabs.map(([k, l], ti) => `<button role="tab" aria-selected="${ti === 0}" data-k="${k}">${l}</button>`).join("")}</div>
+      <p class="sym-text">${esc(s[tabs[0][0]])}</p>
+      ${echoMap[s.id] ? `<p class="echo">Déjà présent dans ${echoMap[s.id]} autre${echoMap[s.id] > 1 ? "s" : ""} rêve${echoMap[s.id] > 1 ? "s" : ""} de ton journal.</p>` : ""}
+      <p class="q">${esc(s.q)}</p></article>`;
+  }).join("");
+  const more = an.hits.length > 7 ? `<p class="muted small">Autres symboles repérés : ${esc(an.hits.slice(7).map((h) => h.s.n).join(", "))}.</p>` : "";
+  const emoBars = an.emoList.length ? an.emoList.slice(0, 5).map((e) => `<div class="bar"><span>${EMO[e.id].n}</span><span class="track"><span class="fill" style="width:${e.pct}%"></span></span><span class="pct">${e.pct} %</span></div>`).join("")
+    : `<p class="muted small">Aucune émotion nommée. Indique ce que tu ressentais au réveil pour affiner la lecture.</p>`;
+  $("#analysis").innerHTML = `
+    <div class="stack" style="gap:22px">
+      <div class="stack" style="gap:8px">
+        <p class="label gold">${esc(fmtDate(d.created))}${d.clarity ? " · " + esc(d.clarity) : ""}</p>
+        <input class="title-input" id="titleInput" type="text" value="${esc(dreamTitle(d, an))}" aria-label="Titre du rêve">
+        <p class="muted small">${an.hits.length} symbole${an.hits.length > 1 ? "s" : ""} repéré${an.hits.length > 1 ? "s" : ""} · ${an.words} mots · enregistré sur cet appareil</p>
+      </div>
+      <p class="quote">${esc(d.text)}</p>
+      <div class="panel stack"><p class="label">Climat émotionnel</p><div class="bars">${emoBars}</div></div>
+      <div class="stack reading"><p class="label gold">Lecture d'ensemble</p>${syn.map((x) => `<p>${esc(x)}</p>`).join("")}</div>
+      ${symCards ? `<div class="stack"><p class="label gold">Symboles clés</p>${symCards}${more}</div>` : ""}
+      ${an.hits.length ? `<div class="panel soft stack"><p class="label">Questions pour aller plus loin</p><ol class="qlist">${an.hits.slice(0, 3).map((h) => `<li>${esc(h.s.q)}</li>`).join("")}<li>Si ce rêve était un message que je m'envoie, que dirait-il en une phrase ?</li></ol></div>` : ""}
+      <div class="stack"><p class="label gold">Pistes</p>${tips.map(([t, x]) => `<div class="panel tip"><h3>${esc(t)}</h3><p>${esc(x)}</p></div>`).join("")}</div>
+      <p class="muted small">Ces lectures croisent psychologie, recherche scientifique et traditions. Elles ouvrent des pistes de réflexion ; toi seul(e) sais ce qui résonne vraiment.</p>
+      <div class="row"><button class="btn small" data-go="raconter">Raconter un autre rêve</button><button class="btn small danger" id="delDream">Supprimer ce rêve</button></div>
+    </div>`;
+  $("#titleInput").addEventListener("change", (e) => { d.title = e.target.value.trim(); persist(); });
+  $$(".sym", $("#analysis")).forEach((card) => {
+    const s = SYM_BY_ID[card.dataset.sym];
+    $$(".seg button", card).forEach((b) => b.addEventListener("click", () => {
+      $$(".seg button", card).forEach((x) => x.setAttribute("aria-selected", x === b));
+      $(".sym-text", card).textContent = s[b.dataset.k];
+    }));
+  });
+  let armed = false;
+  $("#delDream").addEventListener("click", async (e) => {
+    if (!armed) { armed = true; e.target.textContent = "Confirmer la suppression"; setTimeout(() => { armed = false; e.target.textContent = "Supprimer ce rêve"; }, 4000); return; }
+    state.dreams = state.dreams.filter((x) => x.id !== d.id); state.current = null;
+    await persist(); toast("Rêve supprimé."); show("journal");
+  });
+  updateBadge();
+}
+
+/* --- Journal --- */
+function renderJournal() {
+  const q = norm($("#jSearch").value.trim());
+  const list = [...state.dreams].sort((a, b) => b.created.localeCompare(a.created))
+    .filter((d) => !q || norm(d.text + " " + (d.title || "") + " " + (d.sym || []).map((id) => SYM_BY_ID[id]?.n || "").join(" ")).includes(q));
+  $("#jList").innerHTML = list.length ? list.map(dreamCard).join("") :
+    `<div class="panel soft"><p class="muted">${state.dreams.length ? "Aucun rêve ne correspond à cette recherche." : "Aucun rêve pour l'instant. Touche la lune dorée en bas pour raconter le premier."}</p></div>`;
+  const freq = symbolFreq().slice(0, 6);
+  const emoT = {}; let tot = 0;
+  state.dreams.forEach((d) => analyze(d).emoList.forEach((e) => { emoT[e.id] = (emoT[e.id] || 0) + e.v; tot += e.v; }));
+  const emoS = Object.entries(emoT).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (!state.dreams.length) { $("#jStats").hidden = true; return; }
+  $("#jStats").hidden = false;
+  const max = freq.length ? freq[0][1] : 1;
+  $("#jStats").innerHTML = `
+    <p class="label gold">Tes symboles récurrents</p>
+    <div class="bars">${freq.map(([id, n]) => `<div class="bar"><span>${esc(SYM_BY_ID[id]?.n || id)}</span><span class="track"><span class="fill" style="width:${Math.round(n / max * 100)}%"></span></span><span class="pct">${n}</span></div>`).join("") || '<p class="muted small">Pas encore de symbole récurrent.</p>'}</div>
+    <p class="label gold" style="margin-top:10px">Climat de tes nuits</p>
+    <div class="bars">${emoS.map(([id, v]) => `<div class="bar"><span>${EMO[id].n}</span><span class="track"><span class="fill" style="width:${Math.round(v / tot * 100)}%"></span></span><span class="pct">${Math.round(v / tot * 100)} %</span></div>`).join("") || '<p class="muted small">Pas encore d\'émotion notée.</p>'}</div>`;
+}
+
+/* --- Symboles --- */
+function renderSymboles() {
+  $("#symIntro").textContent = `${SYMBOLS.length} symboles, chacun lu par les archétypes, la science, la psychanalyse et les traditions.`;
+  $("#catChips").innerHTML = `<button class="chip sm" aria-pressed="${!state.catFilter}" data-cat="">Tous</button>` +
+    Object.entries(CATS).map(([c, n]) => `<button class="chip sm" aria-pressed="${state.catFilter === c}" data-cat="${c}">${n}</button>`).join("");
+  const q = norm($("#sSearch").value.trim());
+  const list = SYMBOLS.filter((s) => (!state.catFilter || s.c === state.catFilter) && (!q || norm(s.n + " " + s.k).includes(q)))
+    .sort((a, b) => a.n.localeCompare(b.n, "fr"));
+  $("#sList").innerHTML = list.map((s) => `<details class="entry"><summary><h3>${esc(s.n)}</h3><span class="tag${s.c === "T" ? " gold" : ""}">${esc(s.cat)}</span></summary><div class="body">
+    ${s.j ? `<p><b>Archétypes</b>${esc(s.j)}</p>` : ""}${s.s ? `<p><b>Science</b>${esc(s.s)}</p>` : ""}${s.f ? `<p><b>Psychanalyse</b>${esc(s.f)}</p>` : ""}${s.t ? `<p><b>Traditions</b>${esc(s.t)}</p>` : ""}
+    <p style="color:var(--moon);font-style:italic">${esc(s.q)}</p></div></details>`).join("") || `<p class="muted">Aucun symbole trouvé. Essaie un mot plus simple, au singulier.</p>`;
+}
+
+/* --- Réglages --- */
+function renderReglages() {
+  $("#dictSwitch").setAttribute("aria-checked", prefs.dictation === true);
+  const p = $("#lockPanel");
+  if (!cryptoOK()) { p.innerHTML = `<h3>Code de verrouillage</h3><p class="muted small">Le chiffrement n'est disponible que si l'application est ouverte en https.</p>`; return; }
+  if (state.key) {
+    p.innerHTML = `<h3>Journal chiffré</h3><p class="muted small">Tes rêves sont chiffrés (AES-256) avec ton code. Sans lui, personne ne peut les lire, pas même toi : ne l'oublie pas. Le journal se verrouille après 5 minutes en arrière-plan.</p>
+      <div class="row"><button class="btn small" id="lockNow2">Verrouiller maintenant</button><button class="btn small danger" id="removeLock">Retirer le code</button></div>`;
+    $("#lockNow2").onclick = lockNow;
+    let armed = false;
+    $("#removeLock").onclick = async (e) => {
+      if (!armed) { armed = true; e.target.textContent = "Confirmer : déchiffrer"; return; }
+      state.key = null; state.salt = null; await persist(); toast("Code retiré. Le journal n'est plus chiffré."); renderReglages(); $("#lockNow").hidden = true;
+    };
+  } else {
+    p.innerHTML = `<h3>Protéger par un code</h3><p class="muted small">Chiffre ton journal avec un code secret (AES-256, clé dérivée sur l'appareil). Il sera demandé à chaque ouverture.</p>
+      <form class="stack" id="setPinForm" autocomplete="off"><input type="password" id="pin1" placeholder="Nouveau code (4 caractères minimum)" aria-label="Nouveau code" autocomplete="new-password"><input type="password" id="pin2" placeholder="Confirmer le code" aria-label="Confirmer le code" autocomplete="new-password"><p class="err" id="pinErr"></p><button class="btn small" type="submit">Activer le chiffrement</button></form>`;
+    $("#setPinForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const a = $("#pin1").value, b = $("#pin2").value;
+      if (a.length < 4) return ($("#pinErr").textContent = "Le code doit faire au moins 4 caractères.");
+      if (a !== b) return ($("#pinErr").textContent = "Les deux codes ne correspondent pas.");
+      state.salt = crypto.getRandomValues(new Uint8Array(16));
+      state.key = await deriveKey(a, state.salt);
+      await persist(); toast("Journal chiffré. Garde bien ton code."); renderReglages(); $("#lockNow").hidden = false;
+    };
+  }
+}
+function lockNow() {
+  if (!state.key) return;
+  state.dreams = []; state.key = null; state.locked = true; state.current = null;
+  $("#lockScreen").hidden = false; $("#unlockPin").value = ""; setTimeout(() => $("#unlockPin").focus(), 50);
+}
+
+/* ================= Dictée ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recording = false, base = "", committed = "", t0 = 0, tInt = null;
+function setOrb(on) {
+  $("#orb").classList.toggle("rec", on);
+  $("#orbWrap").classList.toggle("rec-on", on);
+  $("#orbMic").hidden = on; $("#orbStop").hidden = !on;
+  $("#orb").setAttribute("aria-label", on ? "Arrêter la dictée" : "Dicter mon rêve");
+  $("#orbHint").textContent = on ? "Je t'écoute… touche la lune pour arrêter." : "Touche la lune pour dicter, ou écris ci-dessous.";
+}
+function tick() { const s = Math.floor((Date.now() - t0) / 1000); $("#timer").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function startDictation() {
+  if (!SR) { toast("La dictée n'est pas disponible sur ce navigateur. Tu peux écrire, ou utiliser le micro de ton clavier."); $("#dreamText").focus(); return; }
+  if (prefs.dictation !== true) { $("#dictSheet").hidden = false; return; }
+  rec = new SR(); rec.lang = "fr-FR"; rec.continuous = true; rec.interimResults = true;
+  try { if ("processLocally" in rec) rec.processLocally = true; } catch {}
+  const ta = $("#dreamText");
+  base = ta.value.trim(); committed = base;
+  rec.onresult = (e) => {
+    let fin = "", int = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fin += r[0].transcript; else int += r[0].transcript; }
+    if (fin) committed = (committed + " " + fin).replace(/\s+/g, " ").trim();
+    ta.value = (committed + " " + int).replace(/\s+/g, " ").trim();
+    updateAnalyzeBtn();
+  };
+  rec.onerror = (e) => {
+    if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) { toast("Le micro n'est pas accessible. Autorise-le dans les réglages, ou écris ton rêve."); stopDictation(); }
+    else if (e.error === "language-not-supported") { toast("La dictée en français n'est pas disponible ici."); stopDictation(); }
+  };
+  rec.onend = () => { if (recording) { try { rec.start(); } catch { stopDictation(); } } };
+  try { rec.start(); } catch { toast("La dictée n'a pas pu démarrer."); return; }
+  recording = true; t0 = Date.now(); tick(); tInt = setInterval(tick, 500); setOrb(true);
+}
+function stopDictation() {
+  recording = false; clearInterval(tInt);
+  try { rec && rec.stop(); } catch {}
+  setOrb(false);
+  $("#dreamText").value = committed || $("#dreamText").value; updateAnalyzeBtn();
+}
+
+/* ================= Événements ================= */
+document.addEventListener("click", (e) => {
+  const go = e.target.closest("[data-go]"); if (go) { show(go.dataset.go); return; }
+  const op = e.target.closest("[data-open]"); if (op) { state.current = op.dataset.open; show("analyse"); return; }
+  const cl = e.target.closest("[data-clar]");
+  if (cl) { state.draft.clarity = state.draft.clarity === cl.dataset.clar ? null : cl.dataset.clar; renderRaconter(); return; }
+  const em = e.target.closest("[data-emo]");
+  if (em) { const id = em.dataset.emo; state.draft.emos = state.draft.emos.includes(id) ? state.draft.emos.filter((x) => x !== id) : [...state.draft.emos, id]; em.setAttribute("aria-pressed", state.draft.emos.includes(id)); return; }
+  const ca = e.target.closest("[data-cat]"); if (ca) { state.catFilter = ca.dataset.cat || null; renderSymboles(); }
+});
+$("#backBtn").addEventListener("click", () => { const cur = VIEWS.find((v) => !$("#v-" + v).hidden); show(prevView && prevView !== cur ? prevView : "nuit"); });
+$("#orb").addEventListener("click", () => (recording ? stopDictation() : startDictation()));
+$("#dreamText").addEventListener("input", updateAnalyzeBtn);
+$("#sampleBtn").addEventListener("click", () => { $("#dreamText").value = SAMPLE; state.draft.clarity = "Vif"; state.draft.emos = ["serenite"]; renderRaconter(); });
+$("#analyzeBtn").addEventListener("click", async () => {
+  if (recording) stopDictation();
+  const text = $("#dreamText").value.trim(); if (!text) return;
+  const d = { id: uid(), created: new Date().toISOString(), text, clarity: state.draft.clarity, emos: state.draft.emos.slice(), title: "" };
+  d.sym = analyze(d).hits.map((h) => h.s.id);
+  state.dreams.push(d); state.current = d.id;
+  await persist();
+  $("#dreamText").value = ""; state.draft = { clarity: null, emos: [] }; $("#timer").textContent = "00:00";
+  show("analyse");
+});
+$("#jSearch").addEventListener("input", renderJournal);
+$("#sSearch").addEventListener("input", renderSymboles);
+$("#dictSwitch").addEventListener("click", () => { prefs.dictation = prefs.dictation !== true; savePrefs(); renderReglages(); });
+$("#dictYes").addEventListener("click", () => { prefs.dictation = true; savePrefs(); $("#dictSheet").hidden = true; startDictation(); });
+$("#dictNo").addEventListener("click", () => { prefs.dictation = false; savePrefs(); $("#dictSheet").hidden = true; $("#dreamText").focus(); });
+$("#lockNow").addEventListener("click", lockNow);
+
+function exportJSON() { return JSON.stringify({ app: "noctiluque", version: 1, exported: new Date().toISOString(), dreams: state.dreams }, null, 2); }
+$("#exportBtn").addEventListener("click", () => {
+  try {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([exportJSON()], { type: "application/json" }));
+    a.download = `noctiluque-journal-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch { toast("Téléchargement impossible ici. Utilise « Copier »."); }
+});
+$("#copyBtn").addEventListener("click", () => {
+  navigator.clipboard.writeText(exportJSON()).then(() => toast("Journal copié. Colle-le dans une note privée."), () => toast("Copie refusée par le navigateur."));
+});
+$("#importFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const incoming = (data.dreams || []).filter((d) => d && d.id && d.text && d.created);
+    const ids = new Set(state.dreams.map((d) => d.id));
+    let n = 0; incoming.forEach((d) => { if (!ids.has(d.id)) { d.sym = analyze(d).hits.map((h) => h.s.id); state.dreams.push(d); n++; } });
+    await persist(); toast(`${n} rêve${n > 1 ? "s" : ""} importé${n > 1 ? "s" : ""}.`);
+  } catch { toast("Ce fichier n'est pas un export Noctiluque valide."); }
+  e.target.value = "";
+});
+let wipeArmed = false;
+$("#wipeBtn").addEventListener("click", async (e) => {
+  if (!wipeArmed) { wipeArmed = true; e.target.textContent = "Toucher encore pour tout effacer"; setTimeout(() => { wipeArmed = false; e.target.textContent = "Effacer tout le journal"; }, 4000); return; }
+  state.dreams = []; state.key = null; state.salt = null; store.del(K_DATA); store.del(K_VAULT);
+  wipeArmed = false; e.target.textContent = "Effacer tout le journal"; $("#lockNow").hidden = true;
+  toast("Journal effacé de cet appareil."); renderReglages(); updateBadge();
+});
+$("#unlockForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("#unlockErr").textContent = "Déchiffrement…";
+  try { await unlock($("#unlockPin").value); $("#lockScreen").hidden = true; $("#unlockErr").textContent = ""; $("#lockNow").hidden = false; route(); }
+  catch { $("#unlockErr").textContent = "Code incorrect."; }
+});
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) hiddenAt = Date.now();
+  else if (state.key && Date.now() - hiddenAt > 5 * 60 * 1000) lockNow();
+});
+function route() { show((location.hash || "#nuit").slice(1), false); }
+window.addEventListener("hashchange", route);
+window.addEventListener("popstate", route);
+
+/* ================= Ciel étoilé ================= */
+(function stars() {
+  const c = $("#stars"), ctx = c.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W, H, S = [];
+  function size() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr;
+    S = Array.from({ length: Math.round(innerWidth * innerHeight / 5200) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: (Math.random() * 1.1 + .3) * dpr, p: Math.random() * 6.28, s: .4 + Math.random() * 1.2 }));
+  }
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of S) { ctx.globalAlpha = .35 + .5 * (0.5 + 0.5 * Math.sin(s.p + t / 1000 * s.s)); ctx.fillStyle = "#e8e6ff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  size(); addEventListener("resize", size); requestAnimationFrame(draw);
+})();
+
+/* ================= Démarrage ================= */
+if (hasVault() && cryptoOK()) { state.locked = true; $("#lockScreen").hidden = false; }
+else loadPlain();
+route();
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+</script>
+</body>
+</html>
